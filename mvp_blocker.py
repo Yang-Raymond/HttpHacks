@@ -126,9 +126,22 @@ class PacHandler(BaseHTTPRequestHandler):
             body_b = body.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/x-ns-proxy-autoconfig")
+            # --- No-cache headers so browsers re-fetch immediately ---
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
             self.send_header("Content-Length", str(len(body_b)))
             self.end_headers()
             self.wfile.write(body_b)
+            return
+        elif self.path == "/healthz":
+            body_b = b"ok"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", str(len(body_b)))
+            self.end_headers()
+            self.wfile.write(body_b)
+            return
         else:
             self.send_response(404); self.end_headers()
     def log_message(self, *_): pass
@@ -368,6 +381,13 @@ class Socks5Proxy:
             await srv.serve_forever()
 
 # ---------- Windows per-user PAC toggle (HKCU) ----------
+def _wininet_refresh():
+    # tell WinInet to re-read settings immediately
+    INTERNET_OPTION_SETTINGS_CHANGED = 39
+    INTERNET_OPTION_REFRESH = 37
+    ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+    ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
+
 def set_user_pac(url: str):
     if sys.platform != "win32":
         print("[INFO] PAC toggle only on Windows."); return
@@ -376,8 +396,7 @@ def set_user_pac(url: str):
         key = r"Software\Microsoft\Windows\CurrentVersion\Internet Settings"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key, 0, winreg.KEY_SET_VALUE) as k:
             winreg.SetValueEx(k, "AutoConfigURL", 0, winreg.REG_SZ, url)
-        INTERNET_OPTION_SETTINGS_CHANGED = 39
-        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        _wininet_refresh()
         print(f"[OK] Enabled per-user PAC: {url}")
     except Exception as e:
         print(f"[WARN] Could not set PAC automatically: {e}")
@@ -392,8 +411,7 @@ def clear_user_pac():
                 winreg.DeleteValue(k, "AutoConfigURL")
             except FileNotFoundError:
                 pass
-        INTERNET_OPTION_SETTINGS_CHANGED = 39
-        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        _wininet_refresh()
         print(f"[OK] Disabled per-user PAC")
     except Exception as e:
         print(f"[WARN] Could not clear PAC automatically: {e}")
@@ -434,10 +452,21 @@ async def main_async(args):
 
     # PAC server uses the actual ports
     pac_server = start_pac_server(args.pac_port, http.port, socks.port)
-    pac_url = f"http://127.0.0.1:{pac_server.server_address[1]}/proxy.pac"
+
+    # Cache-busting: add ?v=<timestamp> so browsers always re-fetch
+    version = str(int(time.time()))
+    pac_url = f"http://127.0.0.1:{pac_server.server_address[1]}/proxy.pac?v={version}"
     print(f"[PAC]        {pac_url}")
+
     if args.enable_pac:
         set_user_pac(pac_url)
+        # Optional quick toggle to force re-evaluation in some Chromium builds
+        try:
+            set_user_pac("")         # temporarily clear
+            set_user_pac(pac_url)    # set again
+        except Exception:
+            pass
+
     if args.disable_pac:
         clear_user_pac()
 
