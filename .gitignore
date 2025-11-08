@@ -1,5 +1,6 @@
 .venv
-.lib
+lib
 logs
-.build
-.dist
+build
+dist
+mvp_blocker.spec
