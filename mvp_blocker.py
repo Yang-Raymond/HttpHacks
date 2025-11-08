@@ -398,6 +398,7 @@ def set_user_pac(url: str):
             winreg.SetValueEx(k, "AutoConfigURL", 0, winreg.REG_SZ, url)
         _wininet_refresh()
         print(f"[OK] Enabled per-user PAC: {url}")
+        os.system("RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8")
     except Exception as e:
         print(f"[WARN] Could not set PAC automatically: {e}")
 
