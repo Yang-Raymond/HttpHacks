@@ -1,11 +1,62 @@
 {
   "blocked": [
+    "login.example.com",
+    "*.youtube.com",
+
     "*.steampowered.com",
     "*.steamcommunity.com",
-    "steamcommunity.com",
-    "login.example.com",
+    "*.steamcontent.com",
+    "*.steamstatic.com",
+    "*.steamserver.net",
+    "*.steamgames.com",
+    "*.s.team",
+
+    "*.epicgames.com",
+    "*.unrealengine.com",
+    "*.egsstatic.com",
+    "*.epicgames.dev",
+
     "*.riotgames.com",
     "*.leagueoflegends.com",
-    "*.youtube.com"
+    "*.valorant.gg",
+    "*.riotcdn.net",
+    "*.rpg.riotgames.com",
+    "*.lol.riotgames.com",
+    "*.valorant-api.com",
+    "*.mmr.riotgames.com",
+
+    "*.battle.net",
+    "*.blizzard.com",
+    "*.blzstatic.com",
+    "*.blz-contentstack.com",
+
+    "*.ubi.com",
+    "*.ubisoft.com",
+    "*.uplay.com",
+    "*.ubistatic.com",
+
+    "*.ea.com",
+    "*.origin.com",
+    "*.eamobile.com",
+    "*.cloud.ea.com",
+
+    "*.xboxlive.com",
+    "*.xboxservices.com",
+    "*.playfabapi.com",
+
+    "*.gog.com",
+    "*.gogcdn.net",
+    "*.gog-statics.com",
+
+    "*.roblox.com",
+    "*.rbxcdn.com",
+    "*.roblox-api.com",
+
+    "*.minecraft.net",
+    "*.mojang.com",
+
+    "*.rockstargames.com",
+    "*.rgl.com",
+    "*.prod.cloud.rockstargames.com"
   ]
 }
