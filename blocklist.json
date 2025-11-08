@@ -1,11 +1,23 @@
 {
-  "blocked": [
-    "*.steampowered.com",
+  "blocked_domains": [
+    "*.youtube.com",
+    "facebook.com",
+    "*.facebook.com",
+    "instagram.com",
+    "*.tiktok.com",
+    "*.reddit.com",
     "*.steamcommunity.com",
-    "steamcommunity.com",
-    "login.example.com",
-    "*.riotgames.com",
-    "*.leagueoflegends.com",
-    "*.youtube.com"
+    "*.steampowered.com",
+    "discord.com",
+    "*.discord.gg"
+  ],
+  "blocked_ips": [
+    "142.250.0.0/15",
+    "157.240.0.0/16",
+    "104.16.0.0/13",
+    "192.229.192.0/19",
+    "1.1.1.1/32",
+    "8.8.8.8/32",
+    "203.0.113.10"
   ]
 }
