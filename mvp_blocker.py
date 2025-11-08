@@ -1,47 +1,11 @@
 import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse, re, ipaddress
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# ---------- Tunables ----------
-MAX_HEADER_BYTES = 64 * 1024          # 64KB header cap
-HEADER_TIMEOUT   = 3                  # seconds to receive request headers
-CONNECT_TIMEOUT  = 5                  # seconds for upstream TCP connect
-PIPE_IDLE_TIMEOUT = 30                # seconds idle per read before closing
-PIPE_SESSION_TIMEOUT = 300            # overall max seconds for a tunnel (optional)
-RETRY_ATTEMPTS   = 2                  # additional attempts (total tries = RETRY_ATTEMPTS+1)
-RETRY_BACKOFF    = 0.5                # seconds between retries
+# Track if we enabled PAC
+_pac_enabled = False
 
-# ---------- Utils ----------
-def parse_host_port(target: str) -> tuple[str, int]:
-    """
-    Parse CONNECT target supporting:
-      - [2001:db8::1]:443
-      - example.com:443
-    Returns (host, port) or raises ValueError on invalid input.
-    """
-    m = re.match(r'^\[([0-9a-fA-F:]+)\]:(\d+)$', target)
-    if m:
-        host, port = m.group(1), int(m.group(2))
-        return host, port
-    if ":" in target:
-        host, port_str = target.split(":", 1)
-        if not port_str.isdigit():
-            raise ValueError("CONNECT: invalid port")
-        return host, int(port_str)
-    raise ValueError("CONNECT requires host:port")
-
-async def safe_open(host: str, port: int):
-    """
-    Open a TCP connection with small retry/backoff to smooth over transient errors.
-    """
-    last_exc = None
-    for attempt in range(RETRY_ATTEMPTS + 1):
-        try:
-            return await asyncio.wait_for(asyncio.open_connection(host, port), timeout=CONNECT_TIMEOUT)
-        except Exception as e:
-            last_exc = e
-            if attempt < RETRY_ATTEMPTS:
-                await asyncio.sleep(RETRY_BACKOFF)
-    raise last_exc or ConnectionError("open_connection failed")
+# Track if we enabled PAC
+_pac_enabled = False
 
 # ---------- Blocklist ----------
 class DomainMatcher:
@@ -337,10 +301,8 @@ class Socks5Proxy:
                 w.write(b"\x05\x02\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
 
             try:
-                ur, uw = await safe_open(host, port)
-            except asyncio.TimeoutError:
-                w.write(b"\x05\x05\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
-            except Exception:
+                ur, uw = await io.open_connection(host, port)
+            except:
                 w.write(b"\x05\x05\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
 
             # success reply (bind address zeroed is acceptable; clients rarely rely on it)
@@ -389,16 +351,20 @@ def _wininet_refresh():
     ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
 
 def set_user_pac(url: str):
-    if sys.platform != "win32":
+    global _pac_enabled
+    if sys.platform != "win32": 
         print("[INFO] PAC toggle only on Windows."); return
     try:
         import winreg
         key = r"Software\Microsoft\Windows\CurrentVersion\Internet Settings"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key, 0, winreg.KEY_SET_VALUE) as k:
             winreg.SetValueEx(k, "AutoConfigURL", 0, winreg.REG_SZ, url)
-        _wininet_refresh()
+        INTERNET_OPTION_SETTINGS_CHANGED = 39
+        INTERNET_OPTION_REFRESH = 37
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
         print(f"[OK] Enabled per-user PAC: {url}")
-        os.system("RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8")
+        _pac_enabled = True
     except Exception as e:
         print(f"[WARN] Could not set PAC automatically: {e}")
 
@@ -412,7 +378,10 @@ def clear_user_pac():
                 winreg.DeleteValue(k, "AutoConfigURL")
             except FileNotFoundError:
                 pass
-        _wininet_refresh()
+        INTERNET_OPTION_SETTINGS_CHANGED = 39
+        INTERNET_OPTION_REFRESH = 37
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
         print(f"[OK] Disabled per-user PAC")
     except Exception as e:
         print(f"[WARN] Could not clear PAC automatically: {e}")
@@ -443,49 +412,14 @@ async def main_async(args):
     # Start proxies first so we know actual bound ports (0 means "choose any free port")
     http = HttpProxy("127.0.0.1", args.proxy_port, matcher, logger)
     socks = Socks5Proxy("127.0.0.1", args.socks_port, matcher, logger)
-
-    # Run servers concurrently, but we need their bound ports to start PAC
-    http_task = asyncio.create_task(http.run())
-    socks_task = asyncio.create_task(socks.run())
-
-    # Give them a moment to bind; in a sturdier version we'd await a readiness event
-    await asyncio.sleep(0.1)
-
-    # PAC server uses the actual ports
-    pac_server = start_pac_server(args.pac_port, http.port, socks.port)
-
-    # Cache-busting: add ?v=<timestamp> so browsers always re-fetch
-    version = str(int(time.time()))
-    pac_url = f"http://127.0.0.1:{pac_server.server_address[1]}/proxy.pac?v={version}"
-    print(f"[PAC]        {pac_url}")
-
-    if args.enable_pac:
-        set_user_pac(pac_url)
-        # Optional quick toggle to force re-evaluation in some Chromium builds
-        try:
-            set_user_pac("")         # temporarily clear
-            set_user_pac(pac_url)    # set again
-        except Exception:
-            pass
-
-    if args.disable_pac:
-        clear_user_pac()
-
-    try:
-        await asyncio.gather(http_task, socks_task)
-    finally:
-        # Cleanup: clear PAC if we enabled it, and stop PAC server
-        try:
-            if args.enable_pac:
-                clear_user_pac()
-        except Exception:
-            pass
-        try:
-            pac_server.shutdown()
-        except Exception:
-            pass
+    
+    print("\n[INFO] Press Ctrl+C to stop")
+    print("[INFO] Blocking is active\n")
+    
+    await asyncio.gather(http.run(), socks.run())
 
 def main():
+    global _pac_enabled
     p = argparse.ArgumentParser("MVP Domain Blocker (proxy+PAC, Python)")
     p.add_argument("--proxy-port", type=int, default=3128, help="0 = auto-pick free port")
     p.add_argument("--socks-port", type=int, default=1080, help="0 = auto-pick free port")
@@ -495,10 +429,15 @@ def main():
     p.add_argument("--blocklist",  type=str, default="blocklist.json")
     p.add_argument("--log",        type=str, default=os.path.join("logs","traffic.log"))
     args = p.parse_args()
+    
     try:
         asyncio.run(main_async(args))
     except KeyboardInterrupt:
-        pass
+        print("\n[CLEANUP] Stopping...")
+        if _pac_enabled:
+            clear_user_pac()
+            time.sleep(2)
+            print("[CLEANUP] PAC removed, browsers should work now")
 
 if __name__ == "__main__":
     main()
