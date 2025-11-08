@@ -4,5 +4,8 @@ app = QApplication([])
 
 window = QWidget()
 window.setWindowTitle('App name')
+
+#
+
 window.show()
 app.exec()
