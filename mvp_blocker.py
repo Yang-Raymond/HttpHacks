@@ -195,7 +195,7 @@ class Socks5Proxy:
                 w.write(b"\x05\x02\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
 
             try:
-                ur, uw = await io.open_connection(host, port)
+                ur, uw = await asyncio.open_connection(host, port)
             except:
                 w.write(b"\x05\x05\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
             # success reply
