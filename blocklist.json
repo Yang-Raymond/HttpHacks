@@ -1,0 +1,11 @@
+{
+  "blocked": [
+    "*.steampowered.com",
+    "*.steamcommunity.com",
+    "steamcommunity.com",
+    "login.example.com",
+    "*.riotgames.com",
+    "*.leagueoflegends.com",
+    "*.youtube.com"
+  ]
+}
