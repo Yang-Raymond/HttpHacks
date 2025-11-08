@@ -1,6 +1,9 @@
 import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+# Track if we enabled PAC
+_pac_enabled = False
+
 # ---------- Blocklist ----------
 class DomainMatcher:
     def __init__(self, domains):
@@ -192,7 +195,7 @@ class Socks5Proxy:
                 w.write(b"\x05\x02\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
 
             try:
-                ur, uw = await asyncio.open_connection(host, port)
+                ur, uw = await io.open_connection(host, port)
             except:
                 w.write(b"\x05\x05\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
             # success reply
@@ -224,6 +227,7 @@ class Socks5Proxy:
 
 # ---------- Windows per-user PAC toggle (HKCU) ----------
 def set_user_pac(url: str):
+    global _pac_enabled
     if sys.platform != "win32": 
         print("[INFO] PAC toggle only on Windows."); return
     try:
@@ -232,8 +236,11 @@ def set_user_pac(url: str):
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key, 0, winreg.KEY_SET_VALUE) as k:
             winreg.SetValueEx(k, "AutoConfigURL", 0, winreg.REG_SZ, url)
         INTERNET_OPTION_SETTINGS_CHANGED = 39
+        INTERNET_OPTION_REFRESH = 37
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
         print(f"[OK] Enabled per-user PAC: {url}")
+        _pac_enabled = True
     except Exception as e:
         print(f"[WARN] Could not set PAC automatically: {e}")
 
@@ -248,7 +255,9 @@ def clear_user_pac():
             except FileNotFoundError:
                 pass
         INTERNET_OPTION_SETTINGS_CHANGED = 39
+        INTERNET_OPTION_REFRESH = 37
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
         print(f"[OK] Disabled per-user PAC")
     except Exception as e:
         print(f"[WARN] Could not clear PAC automatically: {e}")
@@ -275,9 +284,14 @@ async def main_async(args):
     # Proxies
     http = HttpProxy("127.0.0.1", args.proxy_port, matcher, logger)
     socks = Socks5Proxy("127.0.0.1", args.socks_port, matcher, logger)
+    
+    print("\n[INFO] Press Ctrl+C to stop")
+    print("[INFO] Blocking is active\n")
+    
     await asyncio.gather(http.run(), socks.run())
 
 def main():
+    global _pac_enabled
     p = argparse.ArgumentParser("MVP Domain Blocker (proxy+PAC, Python)")
     p.add_argument("--proxy-port", type=int, default=3128)
     p.add_argument("--socks-port", type=int, default=1080)
@@ -287,10 +301,15 @@ def main():
     p.add_argument("--blocklist",  type=str, default="blocklist.json")
     p.add_argument("--log",        type=str, default=os.path.join("logs","traffic.log"))
     args = p.parse_args()
+    
     try:
         asyncio.run(main_async(args))
     except KeyboardInterrupt:
-        pass
+        print("\n[CLEANUP] Stopping...")
+        if _pac_enabled:
+            clear_user_pac()
+            time.sleep(2)
+            print("[CLEANUP] PAC removed, browsers should work now")
 
 if __name__ == "__main__":
     main()
