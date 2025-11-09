@@ -195,6 +195,10 @@ class MainWindow(QMainWindow):
         # RIGHT PANEL: Timer/Clock Widget
         self.clock_widget = ClockWidget(self.manager)
 
+        # Connect timer signals to enable/disable left panel
+        self.clock_widget.timer_started.connect(lambda: self.set_left_panel_enabled(False))
+        self.clock_widget.timer_stopped.connect(lambda: self.set_left_panel_enabled(True))
+
         # Add both panels to main layout
         main_layout.addWidget(left_container, 1)
         main_layout.addWidget(self.clock_widget, 3)
@@ -260,3 +264,14 @@ class MainWindow(QMainWindow):
         
         # Update all in the manager at once
         self.manager.set_all_blocked(checked)
+
+    def set_left_panel_enabled(self, enabled: bool):
+        # Enable or disable all controls in the left panel
+        if self.toggle_all_widget:
+            self.toggle_all_widget.toggle.setEnabled(enabled)
+        
+        for widget in self.website_widgets.values():
+            widget.toggle.setEnabled(enabled)
+        
+        self.add_website_button.setEnabled(enabled)
+        self.add_app_button.setEnabled(enabled)

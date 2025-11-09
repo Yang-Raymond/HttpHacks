@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QSizePolicy, QDialog, QGraphicsDropShadowEffect
-from PyQt6.QtCore import Qt, QTimer, QRect
+from PyQt6.QtCore import Qt, QTimer, QRect, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPen, QFont
 from UI.time_edit_dialog import TimeEditDialog
 import subprocess
@@ -9,6 +9,9 @@ import json
 
 
 class ClockWidget(QWidget):
+    timer_started = pyqtSignal()  # Emitted when timer starts
+    timer_stopped = pyqtSignal()  # Emitted when timer stops
+
     def __init__(self, manager=None):
         super().__init__()
         self.setWindowTitle('Clock Widget')
@@ -26,6 +29,9 @@ class ClockWidget(QWidget):
 
         # Time values
         self.time_digits = [0, 0, 0, 0, 0, 0]
+
+        # Blocker process
+        self.blocker_process = None
 
         # Setup UI
         self.setup_ui()
@@ -103,6 +109,8 @@ class ClockWidget(QWidget):
                 self.start_button.setText("Stop")
                 self.timer.start(1000)  # Update every second
 
+                self.timer_started.emit()
+
                 # Start blocking websites when timer starts
                 if self.manager:
                     self.start_blocking()
@@ -111,6 +119,11 @@ class ClockWidget(QWidget):
             self.is_running = False
             self.start_button.setText("Start")
             self.timer.stop()
+
+            self.timer_stopped.emit()
+            
+            # Stop the blocker script 
+            self.stop_blocking()
 
             # Reset to the remaining time for editing
             hours = self.remaining_seconds // 3600
@@ -130,20 +143,29 @@ class ClockWidget(QWidget):
         self.update()
 
     def start_blocking(self):
-        """Start blocking selected websites"""
-        urls = self.manager.get_blocked_urls()
-        if not urls:
+        #Start blocking selected websites
+        # If already running, don't start again
+        if self.blocker_process and self.blocker_process.poll() is None:
             return
+        
+        self.blocker_process = subprocess.Popen([
+            sys.executable,
+            "mvp_blocker.py",
+            "--blocklist", "blocklist.json",
+            "--enable-pac",
+            "--app-mode", "strict",
+            "--app-scan", "1.0"
+        ])
 
-        temp_file = "temp_blocklist.json"
-        with open(temp_file, "w", encoding="utf-8") as f:
-            json.dump({"blocked": urls}, f, indent=2)
-
-        def run_blocker():
-            subprocess.run([sys.executable, "mvp_blocker.py",
-                           "--blocklist", temp_file, "--enable-pac"])
-
-        threading.Thread(target=run_blocker, daemon=True).start()
+    def stop_blocking(self):
+        #Stop the blocking script
+        if self.blocker_process and self.blocker_process.poll() is None:
+            self.blocker_process.terminate()  # Gracefully terminate
+            try:
+                self.blocker_process.wait(timeout=3)  # Wait up to 3 seconds
+            except subprocess.TimeoutExpired:
+                self.blocker_process.kill()  # Force kill if it doesn't stop
+            self.blocker_process = None
 
     def update_countdown(self):
         if self.remaining_seconds > 0:
@@ -154,6 +176,8 @@ class ClockWidget(QWidget):
             self.is_running = False
             self.start_button.setText("Start")
             self.timer.stop()
+            self.timer_stopped.emit()
+            self.stop_blocking()
             self.update()
 
     def mousePressEvent(self, event):
