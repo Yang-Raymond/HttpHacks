@@ -394,11 +394,31 @@ def set_user_pac(url: str):
         key = r"Software\Microsoft\Windows\CurrentVersion\Internet Settings"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key, 0, winreg.KEY_SET_VALUE) as k:
             winreg.SetValueEx(k, "AutoConfigURL", 0, winreg.REG_SZ, url)
+            # Force enable proxy auto-detect
+            winreg.SetValueEx(k, "ProxyEnable", 0, winreg.REG_DWORD, 0)
+        
         INTERNET_OPTION_SETTINGS_CHANGED = 39
         INTERNET_OPTION_REFRESH = 37
+        INTERNET_OPTION_PROXY = 38
+        
+        # Notify all applications multiple times to ensure they pick it up
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_PROXY, 0, 0)
+        
+        # Broadcast WM_SETTINGCHANGE to force all applications to reload
+        HWND_BROADCAST = 0xFFFF
+        WM_SETTINGCHANGE = 0x001A
+        SMTO_ABORTIFHUNG = 0x0002
+        ctypes.windll.user32.SendNotifyMessageW(
+            HWND_BROADCAST, 
+            WM_SETTINGCHANGE, 
+            0, 
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"
+        )
+        
         print(f"[OK] Enabled per-user PAC: {url}")
+        print(f"[INFO] Browsers may need to close active connections")
         _pac_enabled = True
     except Exception as e:
         print(f"[WARN] Could not set PAC automatically: {e}")
@@ -502,6 +522,7 @@ def main():
     p.add_argument("--pac-port",   type=int, default=18080)
     p.add_argument("--enable-pac", action="store_true")
     p.add_argument("--disable-pac", action="store_true")
+    p.add_argument("--disable-pac-only", action="store_true")
     p.add_argument("--blocklist",  type=str, default="blocklist.json")
     p.add_argument("--apps",       type=str, default="apps.json")
     p.add_argument("--log",        type=str, default=os.path.join("logs","traffic.log"))
@@ -510,6 +531,11 @@ def main():
     p.add_argument("--app-scan",   type=float, default=2.0)
     p.add_argument("--app-dry-run", action="store_true")
     args = p.parse_args()
+
+    if args.disable_pac_only:
+        clear_user_pac()
+        print("[INFO] PAC disabled, exiting")
+        return  # Exit immediately
     
     try:
         asyncio.run(main_async(args))

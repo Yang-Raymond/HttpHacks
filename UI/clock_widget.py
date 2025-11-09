@@ -4,9 +4,6 @@ from PyQt6.QtGui import QPainter, QColor, QPen, QFont
 from UI.time_edit_dialog import TimeEditDialog
 import subprocess
 import sys
-import threading
-import json
-
 
 class ClockWidget(QWidget):
     timer_started = pyqtSignal()  # Emitted when timer starts
@@ -154,23 +151,70 @@ class ClockWidget(QWidget):
         if self.blocker_process and self.blocker_process.poll() is None:
             return
         
-        self.blocker_process = subprocess.Popen([
-            sys.executable,
-            "mvp_blocker.py",
-            "--blocklist", "blocklist.json",
-            "--enable-pac",
-            "--app-mode", "strict",
-            "--app-scan", "1.0"
-        ])
+        try:
+            # Use CREATE_NEW_PROCESS_GROUP to isolate the subprocess
+            if sys.platform == "win32":
+                import subprocess
+                self.blocker_process = subprocess.Popen(
+                    [
+                        sys.executable,
+                        "mvp_blocker.py",
+                        "--blocklist", "blocklist.json",
+                        "--enable-pac",
+                        "--app-mode", "strict",
+                        "--app-scan", "1.0"
+                    ],
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                )
+        
+            print("[INFO] Blocker script started")
+        except Exception as e:
+            print(f"[ERROR] Failed to start blocker: {e}")
+            self.blocker_process = None
 
     def stop_blocking(self):
-        #Stop the blocking script
-        if self.blocker_process and self.blocker_process.poll() is None:
-            self.blocker_process.terminate()  # Gracefully terminate
-            try:
-                self.blocker_process.wait(timeout=3)  # Wait up to 3 seconds
-            except subprocess.TimeoutExpired:
-                self.blocker_process.kill()  # Force kill if it doesn't stop
+        # Stop the blocking script
+        if self.blocker_process is None:
+            return
+        
+        try:
+            # First, clear PAC by running the script with --disable-pac-only
+            if sys.platform == "win32":
+                subprocess.run([
+                    sys.executable,
+                    "mvp_blocker.py",
+                    "--disable-pac-only"
+                ], timeout=3)
+                print("[INFO] PAC configuration cleared")
+            
+            # Check if process is still running
+            if self.blocker_process.poll() is None:
+                if sys.platform == "win32":
+                    import os
+                    # Graceful termination without /F flag
+                    try:
+                        os.system(f'taskkill /PID {self.blocker_process.pid} > nul 2>&1')
+                        print("[INFO] Sent graceful stop signal to blocker script")
+                    except Exception as e:
+                        print(f"[WARN] Could not send stop signal: {e}")
+                        self.blocker_process.terminate()
+                
+                # Wait longer for cleanup to complete (PAC cleanup takes time)
+                try:
+                    self.blocker_process.wait(timeout=3)
+                    print("[INFO] Blocker script stopped with cleanup")
+                except subprocess.TimeoutExpired:
+                    # If it STILL doesn't stop after 3 seconds, force kill
+                    if sys.platform == "win32":
+                        import os
+                        os.system(f'taskkill /F /PID {self.blocker_process.pid} > nul 2>&1')
+                    else:
+                        self.blocker_process.kill()
+                    self.blocker_process.wait()
+                    print("[WARN] Blocker script force killed (cleanup may be incomplete)")
+        except Exception as e:
+            print(f"[WARN] Error stopping blocker: {e}")
+        finally:
             self.blocker_process = None
 
     def update_countdown(self):
