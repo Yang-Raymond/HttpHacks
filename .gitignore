@@ -4,3 +4,4 @@ logs
 build
 dist
 mvp_blocker.spec
+./__pycache__
