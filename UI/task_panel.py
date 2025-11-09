@@ -4,7 +4,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
-from UI.task_widget import TaskWidget, TaskInputWidget
+from UI.task_item import TaskWidget
+from UI.task_input import TaskInputWidget
 import json
 import os
 
