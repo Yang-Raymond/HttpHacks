@@ -150,11 +150,121 @@ A powerful Windows application designed to help you stay focused by blocking dis
 
 7. **Run the application**
    ```bash
-   app.exe
+   .\app.exe
    ```
 ---
 
 ## Usage
+
+## 📖 How to Use Focus Dock
+
+### First Launch - Understanding the Interface
+
+When you open Focus Dock, you'll see **three panels**:
+
+**Left Panel:** Choose what to block (websites & apps)  
+**Middle Panel:** Set timer and start/stop blocking  
+**Right Panel:** Track your tasks during the session
+
+---
+
+### 🎯 Your First Focus Session (5-Minute Guide)
+
+#### Step 1: Choose What to Block (1 minute)
+
+The left panel shows a **pre-loaded list** of common distractions:
+- YouTube, Netflix, Discord, Steam, League of Legends, etc.
+
+**To enable blocking:**
+- Toggle ON the websites/apps you want to block
+- **Tip:** Use **"Toggle All"** at the top to quickly enable everything
+- **Search bar:** Type to filter the list (e.g., "D" shows "Discord, Disney")
+
+**Usually unblocked by default:**
+- Social media (Facebook, Instagram, Twitter, TikTok)
+- Streaming (YouTube, Netflix, Twitch)
+- Gaming platforms (Steam, Discord, League of Legends)
+
+**To add your own distraction:**
+- Click **"Add website"** or **"Add app"** at the bottom
+- We'll cover this in detail later
+
+#### Step 2: Set Your Timer (30 seconds)
+
+1. **Click on the timer** in the center (shows `00:00:00`)
+2. A dialog will pop up with scrollable numbers
+3. **Set your time:**
+   - For beginners: Try **00:25:00** (25 minutes)
+   - Scroll or type the numbers
+4. Click **"OK"**
+
+#### Step 3: Add Tasks (Optional, 1 minute)
+
+In the right panel:
+1. Click the **"+"** button
+2. Enter what you want to accomplish:
+   - Task name: "Study Chapter 5"
+   - Description: "Pages 120-145, take notes"
+3. Click **"Add Task"**
+4. Repeat for more tasks
+
+#### Step 4: Start Your Focus Session! 🚀
+
+1. Click the big blue **"Focus"** button in the center
+2. **What happens:**
+   - Button changes to "Stop"
+   - Timer starts counting down
+   - Blocking activates immediately
+   - Left panel locks (can't change during session)
+
+3. **Test it:** Try visiting a blocked site or an app
+   - Open your browser
+   - Go to youtube.com or facebook.com
+   - You should see the website isn't working
+
+   Or 
+
+   - Open the Discord app
+   - You should see that you can't launch Discord app
+
+#### Step 5: During Your Session
+
+**While the timer is running:**
+- ✅ Check off tasks as you complete them (they disappear automatically)
+- ✅ Watch the progress arc around the timer
+- ❌ Cannot change blocklist (prevents cheating!)
+
+**If you need to stop early:**
+- Click **"Stop"** button
+- Blocking ends immediately
+- Close and reopen browser to access blocked sites
+
+#### Step 6: Session Complete! 🎉
+
+When the timer reaches **00:00:00**:
+- Blocking automatically stops
+- You'll hear/see a completion indicator
+- All websites/apps are accessible again
+- Take a break! (Or start another session)
+
+---
+
+### 🔧 Customizing Your Blocklist
+
+#### Adding a New Website
+
+1. Click **"Add website"** in the left panel
+2. Fill in the form:
+   - **Name:** `LinkedIn` (display name)
+   - **URLs:** `linkedin.com, *.linkedin.com` (comma-separated)
+3. Click **"Add"**
+
+**URL Pattern Tips:**
+- `youtube.com` → blocks only youtube.com
+- `*.youtube.com` → blocks all subdomains (m.youtube.com, music.youtube.com)
+- `*.facebook.com, *.instagram.com` → block multiple at once
+
+**Common patterns:**
 
 ### Starting a Focus Session
 
