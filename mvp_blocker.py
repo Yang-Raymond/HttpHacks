@@ -1,5 +1,6 @@
 import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from apps_blocker import AppBlocker  # requires apps_blocker.py (or mvp_blocker) in same folder
 
 # Track if we enabled PAC
 _pac_enabled = False
