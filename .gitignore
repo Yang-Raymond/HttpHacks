@@ -3,4 +3,4 @@ lib
 logs
 build
 dist
-mvp_blocker.spec
+*.spec

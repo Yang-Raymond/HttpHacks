@@ -1,4 +1,4 @@
-import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse, fnmatch
+import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse, fnmatch, argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Tuple
@@ -487,5 +487,6 @@ def main():
             time.sleep(2)
             print("[CLEANUP] PAC removed, browsers should work now")
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__" and len(sys.argv) == 1:
+    sys.argv += ["--enable-pac", "--app-mode", "strict", "--app-scan", "1.0"]
+main()
