@@ -1,20 +1,51 @@
 import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+# Track if we enabled PAC
+_pac_enabled = False
+
 # ---------- Blocklist ----------
 class DomainMatcher:
-    def __init__(self, domains):
-        exact, suffixes = set(), []
-        for d in domains:
+    def __init__(self, blocked_domains, unblocked_domains=None):
+        unblocked_domains = unblocked_domains or []
+        self.blocked_exact, self.blocked_suffixes = set(), []
+        self.unblocked_exact, self.unblocked_suffixes = set(), []
+
+        # Prepare blocked
+        for d in blocked_domains:
             d = d.strip().lower().rstrip(".")
-            if not d: continue
-            if d.startswith("*."): suffixes.append("." + d[2:])
-            else: exact.add(d); suffixes.append("." + d)
-        self.exact, self.suffixes = exact, suffixes
+            if not d:
+                continue
+            if d.startswith("*."):
+                self.blocked_suffixes.append("." + d[2:])
+            else:
+                self.blocked_exact.add(d)
+                self.blocked_suffixes.append("." + d)
+
+        # Prepare unblocked
+        for d in unblocked_domains:
+            d = d.strip().lower().rstrip(".")
+            if not d:
+                continue
+            if d.startswith("*."):
+                self.unblocked_suffixes.append("." + d[2:])
+            else:
+                self.unblocked_exact.add(d)
+                self.unblocked_suffixes.append("." + d)
 
     def is_blocked(self, host: str) -> bool:
         h = host.lower().rstrip(".")
-        return h in self.exact or any(h.endswith(s) for s in self.suffixes)
+
+        # Explicitly allowed — if in unblocked list, never block
+        if h in self.unblocked_exact or any(h.endswith(s) for s in self.unblocked_suffixes):
+            return False
+
+        # Explicitly blocked — only if found in blocked lists
+        if h in self.blocked_exact or any(h.endswith(s) for s in self.blocked_suffixes):
+            return True
+
+        # Not listed anywhere → not blocked
+        return False
 
 # ---------- Logging ----------
 class Logger:
@@ -192,7 +223,7 @@ class Socks5Proxy:
                 w.write(b"\x05\x02\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
 
             try:
-                ur, uw = await asyncio.open_connection(host, port)
+                ur, uw = await io.open_connection(host, port)
             except:
                 w.write(b"\x05\x05\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
             # success reply
@@ -224,6 +255,7 @@ class Socks5Proxy:
 
 # ---------- Windows per-user PAC toggle (HKCU) ----------
 def set_user_pac(url: str):
+    global _pac_enabled
     if sys.platform != "win32": 
         print("[INFO] PAC toggle only on Windows."); return
     try:
@@ -232,8 +264,11 @@ def set_user_pac(url: str):
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key, 0, winreg.KEY_SET_VALUE) as k:
             winreg.SetValueEx(k, "AutoConfigURL", 0, winreg.REG_SZ, url)
         INTERNET_OPTION_SETTINGS_CHANGED = 39
+        INTERNET_OPTION_REFRESH = 37
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
         print(f"[OK] Enabled per-user PAC: {url}")
+        _pac_enabled = True
     except Exception as e:
         print(f"[WARN] Could not set PAC automatically: {e}")
 
@@ -248,36 +283,74 @@ def clear_user_pac():
             except FileNotFoundError:
                 pass
         INTERNET_OPTION_SETTINGS_CHANGED = 39
+        INTERNET_OPTION_REFRESH = 37
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
         print(f"[OK] Disabled per-user PAC")
     except Exception as e:
         print(f"[WARN] Could not clear PAC automatically: {e}")
 
 # ---------- CLI ----------
 def load_blocklist(path):
-    if not path or not os.path.exists(path): 
-        return ["*.steamcommunity.com", "*.steampowered.com", "login.example", "*.tracker.test"]
+    """
+    Loads JSON blocklist with nested objects, e.g.:
+    {
+      "blocked": {
+        "YouTube": ["*.youtube.com", "youtu.be"],
+        "TikTok": ["*.tiktok.com"]
+      },
+      "unblocked": {
+        "Meta": ["*.facebook.com", "*.instagram.com"]
+      }
+    }
+
+    Returns two flattened lists: (blocked_domains, unblocked_domains)
+    """
+    if not path or not os.path.exists(path):
+        raise FileNotFoundError(f"Blocklist file not found: {path}")
+
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    return data.get("blocked", [])
+
+    blocked_domains = []
+    unblocked_domains = []
+
+    # Flatten blocked lists
+    for group in data.get("blocked", {}).values():
+        blocked_domains.extend(group)
+
+    # Flatten unblocked lists
+    for group in data.get("unblocked", {}).values():
+        unblocked_domains.extend(group)
+
+    return blocked_domains, unblocked_domains
 
 async def main_async(args):
-    matcher = DomainMatcher(load_blocklist(args.blocklist))
+    # Load flattened lists from blocklist.json
+    blocked, unblocked = load_blocklist(args.blocklist)
+    matcher = DomainMatcher(blocked, unblocked)
     logger = Logger(args.log)
 
-    # PAC
+    # PAC server
     start_pac_server(args.pac_port, args.proxy_port, args.socks_port)
     pac_url = f"http://127.0.0.1:{args.pac_port}/proxy.pac"
     print(f"[PAC]        {pac_url}")
-    if args.enable_pac: set_user_pac(pac_url)
-    if args.disable_pac: clear_user_pac()
+    if args.enable_pac:
+        set_user_pac(pac_url)
+    if args.disable_pac:
+        clear_user_pac()
 
     # Proxies
     http = HttpProxy("127.0.0.1", args.proxy_port, matcher, logger)
     socks = Socks5Proxy("127.0.0.1", args.socks_port, matcher, logger)
+    
+    print("\n[INFO] Press Ctrl+C to stop")
+    print("[INFO] Blocking is active\n")
+    
     await asyncio.gather(http.run(), socks.run())
 
 def main():
+    global _pac_enabled
     p = argparse.ArgumentParser("MVP Domain Blocker (proxy+PAC, Python)")
     p.add_argument("--proxy-port", type=int, default=3128)
     p.add_argument("--socks-port", type=int, default=1080)
@@ -287,10 +360,15 @@ def main():
     p.add_argument("--blocklist",  type=str, default="blocklist.json")
     p.add_argument("--log",        type=str, default=os.path.join("logs","traffic.log"))
     args = p.parse_args()
+    
     try:
         asyncio.run(main_async(args))
     except KeyboardInterrupt:
-        pass
+        print("\n[CLEANUP] Stopping...")
+        if _pac_enabled:
+            clear_user_pac()
+            time.sleep(2)
+            print("[CLEANUP] PAC removed, browsers should work now")
 
 if __name__ == "__main__":
     main()
