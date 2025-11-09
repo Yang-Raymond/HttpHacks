@@ -144,18 +144,46 @@ class AppBlocker:
 
 # ---------- Domain Blocklist ----------
 class DomainMatcher:
-    def __init__(self, domains):
-        exact, suffixes = set(), []
-        for d in domains:
+    def __init__(self, blocked_domains, unblocked_domains=None):
+        unblocked_domains = unblocked_domains or []
+        self.blocked_exact, self.blocked_suffixes = set(), []
+        self.unblocked_exact, self.unblocked_suffixes = set(), []
+
+        # Prepare blocked
+        for d in blocked_domains:
             d = d.strip().lower().rstrip(".")
-            if not d: continue
-            if d.startswith("*."): suffixes.append("." + d[2:])
-            else: exact.add(d); suffixes.append("." + d)
-        self.exact, self.suffixes = exact, suffixes
+            if not d:
+                continue
+            if d.startswith("*."):
+                self.blocked_suffixes.append("." + d[2:])
+            else:
+                self.blocked_exact.add(d)
+                self.blocked_suffixes.append("." + d)
+
+        # Prepare unblocked
+        for d in unblocked_domains:
+            d = d.strip().lower().rstrip(".")
+            if not d:
+                continue
+            if d.startswith("*."):
+                self.unblocked_suffixes.append("." + d[2:])
+            else:
+                self.unblocked_exact.add(d)
+                self.unblocked_suffixes.append("." + d)
 
     def is_blocked(self, host: str) -> bool:
         h = host.lower().rstrip(".")
-        return h in self.exact or any(h.endswith(s) for s in self.suffixes)
+
+        # Explicitly allowed — if in unblocked list, never block
+        if h in self.unblocked_exact or any(h.endswith(s) for s in self.unblocked_suffixes):
+            return False
+
+        # Explicitly blocked — only if found in blocked lists
+        if h in self.blocked_exact or any(h.endswith(s) for s in self.blocked_suffixes):
+            return True
+
+        # Not listed anywhere → not blocked
+        return False
 
 # ---------- Logging ----------
 class Logger:
@@ -402,14 +430,23 @@ def clear_user_pac():
 # ---------- Config Loading ----------
 def load_config(blocklist_path, apps_path):
     # Load domain blocklist
-    domains = []
-    if blocklist_path and os.path.exists(blocklist_path):
-        with open(blocklist_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        domains = data.get("blocked", [])
-    else:
-        domains = ["*.steamcommunity.com", "*.steampowered.com"]
-    
+    if not blocklist_path or not os.path.exists(blocklist_path):
+        raise FileNotFoundError(f"Blocklist file not found: {blocklist_path}")
+
+    with open(blocklist_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    blocked_domains = []
+    unblocked_domains = []
+
+    # Flatten blocked lists
+    for group in data.get("blocked", {}).values():
+        blocked_domains.extend(group)
+
+    # Flatten unblocked lists
+    for group in data.get("unblocked", {}).values():
+        unblocked_domains.extend(group)
+
     # Load app patterns
     apps = []
     if apps_path and os.path.exists(apps_path):
@@ -418,22 +455,23 @@ def load_config(blocklist_path, apps_path):
         apps = data.get("apps", [])
     else:
         apps = ["discord*", "steam*"]
-    
-    return domains, apps
+
+    return blocked_domains, unblocked_domains, apps
 
 # ---------- Main ----------
 async def main_async(args):
-    domains, app_patterns = load_config(args.blocklist, args.apps)
-    
-    matcher = DomainMatcher(domains)
+    blocked, unblocked, app_patterns = load_config(args.blocklist, args.apps)
+    matcher = DomainMatcher(blocked, unblocked)
     logger = Logger(args.log)
 
-    # PAC
+    # PAC server
     start_pac_server(args.pac_port, args.proxy_port, args.socks_port)
     pac_url = f"http://127.0.0.1:{args.pac_port}/proxy.pac"
     print(f"[PAC]        {pac_url}")
-    if args.enable_pac: set_user_pac(pac_url)
-    if args.disable_pac: clear_user_pac()
+    if args.enable_pac:
+        set_user_pac(pac_url)
+    if args.disable_pac:
+        clear_user_pac()
 
     # Proxies
     http = HttpProxy("127.0.0.1", args.proxy_port, matcher, logger)
