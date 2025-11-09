@@ -324,21 +324,39 @@ class MainWindow(QMainWindow):
 
     def handle_add_item(self, item_type):
         """Open dialog to add website or app"""
-        dialog = AddItemDialog(item_type, self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            app_name, url = dialog.get_values()
-            
-            if app_name and url:
-                if app_name in self.website_widgets:
-                    QMessageBox.warning(self, "Exists", f"{app_name} already exists.")
-                    return
+        if item_type == "website":
+            dialog = AddWebsiteDialog(self)
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                name, url = dialog.get_values()
                 
-                self.manager.all_sites[app_name] = [url]
-                self.manager.unblocked[app_name] = [url]
-                self.manager.blocked[app_name] = []
-                self.add_website_widget(app_name)
-            else:
-                QMessageBox.warning(self, "Input Error", "Please enter both app name and URL/exe.")
+                if name and url:
+                    if name in self.website_widgets:
+                        QMessageBox.warning(self, "Exists", f"{name} already exists.")
+                        return
+                    
+                    self.manager.all_sites[name] = [url]
+                    self.manager.unblocked[name] = [url]
+                    self.manager.blocked[name] = []
+                    self.add_website_widget(name)
+                else:
+                    QMessageBox.warning(self, "Input Error", "Please enter both website name and URL.")
+        
+        elif item_type == "app":
+            dialog = AddAppDialog(self)
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                name, exe = dialog.get_values()
+                
+                if name and exe:
+                    if name in self.website_widgets:
+                        QMessageBox.warning(self, "Exists", f"{name} already exists.")
+                        return
+                    
+                    self.manager.all_sites[name] = [exe]
+                    self.manager.unblocked[name] = [exe]
+                    self.manager.blocked[name] = []
+                    self.add_website_widget(name)
+                else:
+                    QMessageBox.warning(self, "Input Error", "Please enter both app name and executable.")
 
     def update_block_status(self, site_name, blocked: bool):
         self.manager.set_blocked(site_name, blocked)
@@ -850,131 +868,320 @@ class ClockWidget(QWidget):
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, time_text)
 
 
-class AddItemDialog(QDialog):
-    """Dialog for adding websites or apps"""
-    def __init__(self, dialog_type="website", parent=None):
+class AddWebsiteDialog(QDialog):
+    """Dialog for adding websites"""
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.dialog_type = dialog_type  # "website" or "app"
-        self.setWindowTitle(f'Add {dialog_type.title()}')
+        self.setWindowTitle('Add Website')
         self.setModal(True)
-        self.setFixedSize(600, 400)
+        self.setFixedSize(480, 360)
         
-        # Windows 11 styling with overlay effect
+        # Windows 11 styling - clean white background
         self.setStyleSheet("""
             QDialog {
-                background-color: rgba(169, 169, 169, 240);
+                background-color: #FFFFFF;
             }
         """)
-        
-        self.app_name = ""
-        self.app_url = ""
         
         self.setup_ui()
         
     def setup_ui(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(32, 32, 32, 32)
         layout.setSpacing(20)
         
-        # Spacer
-        layout.addSpacing(20)
-        
-        # App name label and input
-        app_name_label = QLabel("App name")
-        app_name_label.setStyleSheet("""
-            font-size: 16px;
+        # Title
+        title_label = QLabel("Add Website")
+        title_label.setStyleSheet("""
+            font-size: 20px;
             color: #1F1F1F;
             font-family: 'Segoe UI';
-            font-weight: 500;
+            font-weight: 600;
         """)
-        layout.addWidget(app_name_label)
+        layout.addWidget(title_label)
         
-        self.app_name_input = QLineEdit()
-        self.app_name_input.setStyleSheet("""
+        layout.addSpacing(8)
+        
+        # Website name label and input
+        name_label = QLabel("Website name")
+        name_label.setStyleSheet("""
+            font-size: 13px;
+            color: #616161;
+            font-family: 'Segoe UI';
+            font-weight: 600;
+        """)
+        layout.addWidget(name_label)
+        
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("e.g., Facebook")
+        self.name_input.setStyleSheet("""
             QLineEdit {
-                background-color: #FFFFFF;
-                border: none;
-                border-radius: 12px;
-                padding: 16px 20px;
-                font-size: 15px;
+                background-color: #F9F9F9;
+                border: 2px solid #E1E1E1;
+                border-radius: 6px;
+                padding: 12px 14px;
+                font-size: 14px;
                 font-family: 'Segoe UI';
                 color: #1F1F1F;
             }
             QLineEdit:focus {
                 background-color: #FFFFFF;
+                border: 2px solid #0067C0;
             }
         """)
-        layout.addWidget(self.app_name_input)
+        layout.addWidget(self.name_input)
         
-        layout.addSpacing(10)
+        layout.addSpacing(12)
         
-        # URL or App exe label and input
-        url_label = QLabel("URL or App exe")
+        # URL label and input
+        url_label = QLabel("Website URL")
         url_label.setStyleSheet("""
-            font-size: 16px;
-            color: #1F1F1F;
+            font-size: 13px;
+            color: #616161;
             font-family: 'Segoe UI';
-            font-weight: 500;
+            font-weight: 600;
         """)
         layout.addWidget(url_label)
         
         self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("e.g., facebook.com")
         self.url_input.setStyleSheet("""
             QLineEdit {
-                background-color: #FFFFFF;
-                border: none;
-                border-radius: 12px;
-                padding: 16px 20px;
-                font-size: 15px;
+                background-color: #F9F9F9;
+                border: 2px solid #E1E1E1;
+                border-radius: 6px;
+                padding: 12px 14px;
+                font-size: 14px;
                 font-family: 'Segoe UI';
                 color: #1F1F1F;
             }
             QLineEdit:focus {
                 background-color: #FFFFFF;
+                border: 2px solid #0067C0;
             }
         """)
         layout.addWidget(self.url_input)
         
-        # Spacer to push button to bottom center
+        # Spacer
         layout.addStretch()
         
-        # ADD button
-        add_button = QPushButton("ADD")
-        add_button.setFixedSize(180, 60)
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(12)
+        
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setMinimumSize(100, 40)
+        cancel_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: #F3F3F3;
+                border: 1px solid #E1E1E1;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: 'Segoe UI';
+                color: #1F1F1F;
+            }
+            QPushButton:hover {
+                background-color: #E8E8E8;
+                border: 1px solid #D1D1D1;
+            }
+            QPushButton:pressed {
+                background-color: #D8D8D8;
+            }
+        """)
+        cancel_button.clicked.connect(self.reject)
+        
+        add_button = QPushButton("Add")
+        add_button.setMinimumSize(100, 40)
         add_button.setCursor(Qt.CursorShape.PointingHandCursor)
         add_button.setStyleSheet("""
             QPushButton {
-                background-color: #2D2D2D;
+                background-color: #0067C0;
                 color: white;
                 border: none;
-                border-radius: 12px;
-                font-size: 16px;
+                border-radius: 6px;
+                font-size: 14px;
                 font-weight: 600;
                 font-family: 'Segoe UI';
-                letter-spacing: 1px;
             }
             QPushButton:hover {
-                background-color: #3D3D3D;
+                background-color: #005A9E;
             }
             QPushButton:pressed {
-                background-color: #1D1D1D;
+                background-color: #004578;
             }
         """)
         add_button.clicked.connect(self.accept)
         
-        button_layout = QHBoxLayout()
         button_layout.addStretch()
+        button_layout.addWidget(cancel_button)
         button_layout.addWidget(add_button)
-        button_layout.addStretch()
-        layout.addLayout(button_layout)
         
-        layout.addSpacing(20)
+        layout.addLayout(button_layout)
         
         self.setLayout(layout)
         
     def get_values(self):
-        """Return the app name and URL entered by user"""
-        return (self.app_name_input.text().strip(), self.url_input.text().strip())
+        """Return the website name and URL entered by user"""
+        return (self.name_input.text().strip(), self.url_input.text().strip())
+
+
+class AddAppDialog(QDialog):
+    """Dialog for adding apps"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Add App')
+        self.setModal(True)
+        self.setFixedSize(480, 360)
+        
+        # Windows 11 styling - clean white background
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #FFFFFF;
+            }
+        """)
+        
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout()
+        layout.setContentsMargins(32, 32, 32, 32)
+        layout.setSpacing(20)
+        
+        # Title
+        title_label = QLabel("Add App")
+        title_label.setStyleSheet("""
+            font-size: 20px;
+            color: #1F1F1F;
+            font-family: 'Segoe UI';
+            font-weight: 600;
+        """)
+        layout.addWidget(title_label)
+        
+        layout.addSpacing(8)
+        
+        # App name label and input
+        name_label = QLabel("App name")
+        name_label.setStyleSheet("""
+            font-size: 13px;
+            color: #616161;
+            font-family: 'Segoe UI';
+            font-weight: 600;
+        """)
+        layout.addWidget(name_label)
+        
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("e.g., Chrome")
+        self.name_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #F9F9F9;
+                border: 2px solid #E1E1E1;
+                border-radius: 6px;
+                padding: 12px 14px;
+                font-size: 14px;
+                font-family: 'Segoe UI';
+                color: #1F1F1F;
+            }
+            QLineEdit:focus {
+                background-color: #FFFFFF;
+                border: 2px solid #0067C0;
+            }
+        """)
+        layout.addWidget(self.name_input)
+        
+        layout.addSpacing(12)
+        
+        # Executable label and input
+        exe_label = QLabel("App executable")
+        exe_label.setStyleSheet("""
+            font-size: 13px;
+            color: #616161;
+            font-family: 'Segoe UI';
+            font-weight: 600;
+        """)
+        layout.addWidget(exe_label)
+        
+        self.exe_input = QLineEdit()
+        self.exe_input.setPlaceholderText("e.g., chrome.exe")
+        self.exe_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #F9F9F9;
+                border: 2px solid #E1E1E1;
+                border-radius: 6px;
+                padding: 12px 14px;
+                font-size: 14px;
+                font-family: 'Segoe UI';
+                color: #1F1F1F;
+            }
+            QLineEdit:focus {
+                background-color: #FFFFFF;
+                border: 2px solid #0067C0;
+            }
+        """)
+        layout.addWidget(self.exe_input)
+        
+        # Spacer
+        layout.addStretch()
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(12)
+        
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setMinimumSize(100, 40)
+        cancel_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: #F3F3F3;
+                border: 1px solid #E1E1E1;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: 'Segoe UI';
+                color: #1F1F1F;
+            }
+            QPushButton:hover {
+                background-color: #E8E8E8;
+                border: 1px solid #D1D1D1;
+            }
+            QPushButton:pressed {
+                background-color: #D8D8D8;
+            }
+        """)
+        cancel_button.clicked.connect(self.reject)
+        
+        add_button = QPushButton("Add")
+        add_button.setMinimumSize(100, 40)
+        add_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        add_button.setStyleSheet("""
+            QPushButton {
+                background-color: #0067C0;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 600;
+                font-family: 'Segoe UI';
+            }
+            QPushButton:hover {
+                background-color: #005A9E;
+            }
+            QPushButton:pressed {
+                background-color: #004578;
+            }
+        """)
+        add_button.clicked.connect(self.accept)
+        
+        button_layout.addStretch()
+        button_layout.addWidget(cancel_button)
+        button_layout.addWidget(add_button)
+        
+        layout.addLayout(button_layout)
+        
+        self.setLayout(layout)
+        
+    def get_values(self):
+        """Return the app name and executable entered by user"""
+        return (self.name_input.text().strip(), self.exe_input.text().strip())
 
 
 app = QApplication([])
