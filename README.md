@@ -116,17 +116,10 @@ A powerful Windows application designed to help you stay focused by blocking dis
    ```bash
    python -m venv .venv
    .venv\Scripts\Activate.ps1
-   ```
-
-   # Use this command:
-   ```bash
    pip install PyQt6 psutil pyinstaller
    ```
+   > **Troubleshooting:** If `pyinstaller` command is not found, use `python -m PyInstaller` instead
 
-   # If that doesn't work, try:
-   ```bash
-   python -m pip install PyQt6 psutil pyinstaller
-   ```
 
 4. **Compile the application**
    a. Build the main application:
