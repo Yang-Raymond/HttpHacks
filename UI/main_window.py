@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QFrame, QMessageBox, QDialog, QGraphicsDropShadowEffect
+    QScrollArea, QFrame, QMessageBox, QDialog, QGraphicsDropShadowEffect, QLineEdit
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
@@ -88,6 +88,35 @@ class MainWindow(QMainWindow):
         divider.setFrameShape(QFrame.Shape.HLine)
         divider.setStyleSheet("background-color: #E5E5E5; max-height: 1px;")
         left_container_layout.addWidget(divider)
+
+        # Search bar
+        search_widget = QWidget()
+        search_widget.setStyleSheet("background-color: transparent; border-radius: 0px;")
+        search_layout = QVBoxLayout()
+        search_layout.setContentsMargins(16, 12, 16, 12)
+        search_widget.setLayout(search_layout)
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search apps and websites...")
+        self.search_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #F3F3F3;
+                border: 1px solid #E5E5E5;
+                border-radius: 4px;
+                padding: 8px 12px;
+                font-size: 13px;
+                font-family: 'Segoe UI';
+                color: #212121;
+            }
+            QLineEdit:focus {
+                border: 1px solid #0067C0;
+                background-color: #FFFFFF;
+            }
+        """)
+        self.search_input.textChanged.connect(self.filter_websites)
+        search_layout.addWidget(self.search_input)
+
+        left_container_layout.addWidget(search_widget)
 
         # Scroll area for website toggles
         scroll_area = QScrollArea()
@@ -193,6 +222,9 @@ class MainWindow(QMainWindow):
             is_blocked = self.manager.is_blocked(site_name)
             self.add_website_widget(site_name, is_blocked)
 
+        # Add stretch to push all widgets to the top
+        self.left_layout.addStretch()
+
         # Add both panels to main layout
         # MIDDLE PANEL: Timer/Clock Widget =====
         self.clock_widget = ClockWidget(self.manager)
@@ -291,3 +323,15 @@ class MainWindow(QMainWindow):
         
         self.add_website_button.setEnabled(enabled)
         self.add_app_button.setEnabled(enabled)
+        self.search_input.setEnabled(enabled) 
+
+    def filter_websites(self, search_text: str):
+        # Filter website widgets based on search text
+        search_text = search_text.lower().strip()
+        
+        for site_name, widget in self.website_widgets.items():
+            # Show widget if search is empty or site name contains search text
+            if not search_text or search_text in site_name.lower():
+                widget.show()
+            else:
+                widget.hide()
