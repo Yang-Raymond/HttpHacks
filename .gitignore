@@ -5,3 +5,4 @@ build
 dist
 mvp_blocker.spec
 __pycache__
+UI/__pycache__
