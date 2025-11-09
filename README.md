@@ -13,11 +13,13 @@ A powerful Windows application designed to help you stay focused by blocking dis
 **Option 2: Run from Source**
 
 1. Install Python 3.8+
-2. Run `pip install PyQt6 psutil pyinstaller`
-3. Run `pyinstaller --onefile --name app --add-data "blocklist.json;." --add-data "tasks.json;." app.py`
-4. Run `pyinstaller --onefile --name mvp_blocker --add-data "blocklist.json;." mvp_blocker.py`
-5. cd /dist folder
-6. Run `app.exe`.
+2. Run `python -m venv .venv`
+3. Run `.venv\Scripts\Activate.ps1`
+4. Run `pip install PyQt6 psutil pyinstaller`
+5. Run `pyinstaller --onefile --name app --add-data "blocklist.json;." --add-data "tasks.json;." app.py`
+6. Run `pyinstaller --onefile --name mvp_blocker --add-data "blocklist.json;." mvp_blocker.py`
+7. cd /dist folder
+8. Run `app.exe`.
 
 ⚠️ **Windows 10/11 Required** - PAC configuration and app blocking only work on Windows
 
@@ -112,16 +114,32 @@ A powerful Windows application designed to help you stay focused by blocking dis
 3. **Install required packages**
 
    ```bash
+   python -m venv .venv
+   .venv\Scripts\Activate.ps1
+   ```
+
+   # Use this command:
+   ```bash
    pip install PyQt6 psutil pyinstaller
    ```
 
+   # If that doesn't work, try:
+   ```bash
+   python -m pip install PyQt6 psutil pyinstaller
+   ```
+
 4. **Compile the application**
-   ```bash
-   pyinstaller --onefile --name app --add-data "blocklist.json;." --add-data "tasks.json;." app.py
-   ```
-   ```bash
-   pyinstaller --onefile --name mvp_blocker --add-data "blocklist.json;." mvp_blocker.py
-   ```
+   a. Build the main application:
+      ```bash
+      pyinstaller --onefile --name app --add-data "blocklist.json;." --add-data "tasks.json;." app.py
+      ```
+      
+   b. Build the blocker engine:
+      ```bash
+      pyinstaller --onefile --name mvp_blocker --add-data "blocklist.json;." mvp_blocker.py
+      ```
+      
+   > **Troubleshooting:** If `pyinstaller` command is not found, use `python -m PyInstaller` instead
 
 5. **Move to the correct directory**
    ```bash
