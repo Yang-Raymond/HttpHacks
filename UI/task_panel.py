@@ -60,14 +60,11 @@ class TaskPanel(QWidget):
             QPushButton {
                 background-color: transparent;
                 color: #0067C0;
-                border: 2px solid #0067C0;
-                border-radius: 16px;
                 font-size: 20px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #0067C0;
-                color: white;
+                color: grey;
             }
         """)
         self.add_task_button.clicked.connect(self.show_task_input)
