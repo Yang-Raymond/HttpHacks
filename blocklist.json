@@ -1,7 +1,7 @@
 {
   "websites": {
     "Facebook & Meta": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "*.facebook.com",
@@ -20,7 +20,7 @@
       ]
     },
     "TikTok": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "*.tiktok.com",
@@ -35,7 +35,7 @@
       ]
     },
     "Reddit": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "*.reddit.com",
@@ -47,7 +47,7 @@
       ]
     },
     "Twitter / X": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "x.com",
@@ -61,7 +61,7 @@
       ]
     },
     "Snapchat": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "*.snapchat.com",
@@ -72,7 +72,7 @@
       ]
     },
     "Discord": {
-      "blocked": false,
+      "blocked": true,
       "apps": "discord*",
       "urls": [
         "discord.com",
@@ -87,7 +87,7 @@
       ]
     },
     "Twitch": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "twitch.tv",
@@ -99,7 +99,7 @@
       ]
     },
     "Netflix": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "netflix.com",
@@ -115,7 +115,7 @@
       ]
     },
     "Prime Video": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "primevideo.com",
@@ -127,7 +127,7 @@
       ]
     },
     "Hulu": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "hulu.com",
@@ -137,7 +137,7 @@
       ]
     },
     "Disney+": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "disneyplus.com",
@@ -151,7 +151,7 @@
       ]
     },
     "Max (HBO)": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "max.com",
@@ -161,7 +161,7 @@
       ]
     },
     "Crunchyroll / VRV": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "crunchyroll.com",
@@ -171,7 +171,7 @@
       ]
     },
     "Apple Music / iTunes": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "music.apple.com",
@@ -183,7 +183,7 @@
       ]
     },
     "SoundCloud": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "soundcloud.com",
@@ -191,7 +191,7 @@
       ]
     },
     "Steam": {
-      "blocked": false,
+      "blocked": true,
       "apps": "steam*",
       "urls": [
         "steamcommunity.com",
@@ -211,7 +211,7 @@
       ]
     },
     "Epic Games / Fortnite": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "epicgames.com",
@@ -221,7 +221,7 @@
       ]
     },
     "Riot Games": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "*.riotgames.com",
@@ -237,7 +237,7 @@
       ]
     },
     "League of Legends": {
-      "blocked": false,
+      "blocked": true,
       "apps": "LeagueClientUx*",
       "urls": [
         "*.leagueoflegends.com",
@@ -256,7 +256,7 @@
       ]
     },
     "Blizzard / Battle.net": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "battle.net",
@@ -268,7 +268,7 @@
       ]
     },
     "EA / Origin": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "ea.com",
@@ -278,7 +278,7 @@
       ]
     },
     "Ubisoft": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "ubisoft.com",
@@ -290,7 +290,7 @@
       ]
     },
     "Rockstar Games": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "rockstargames.com",
@@ -299,7 +299,7 @@
       ]
     },
     "GOG": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "gog.com",
@@ -309,7 +309,7 @@
       ]
     },
     "Xbox": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "xbox.com",
@@ -321,7 +321,7 @@
       ]
     },
     "PlayStation": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "playstation.com",
@@ -331,7 +331,7 @@
       ]
     },
     "Telegram": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "telegram.org",
@@ -345,7 +345,7 @@
       ]
     },
     "Pinterest": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "pinterest.com",
@@ -355,7 +355,7 @@
       ]
     },
     "Tumblr": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "tumblr.com",
@@ -363,7 +363,7 @@
       ]
     },
     "DeviantArt": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "deviantart.com",
@@ -371,7 +371,7 @@
       ]
     },
     "Roblox": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "roblox.com",
@@ -381,7 +381,7 @@
       ]
     },
     "Kick & Rumble": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "kick.com",
@@ -391,7 +391,7 @@
       ]
     },
     "WeChat / QQ": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "wechat.com",
@@ -401,7 +401,7 @@
       ]
     },
     "VK": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "vk.com",
@@ -409,7 +409,7 @@
       ]
     },
     "Spotify": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "spotify.com",
@@ -422,7 +422,7 @@
       ]
     },
     "YouTube": {
-      "blocked": false,
+      "blocked": true,
       "apps": "",
       "urls": [
         "*.youtube.com",

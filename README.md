@@ -1,15 +1,36 @@
-# Focus Dock 
+# Focus Dock
 
-A powerful Windows application designed to help you stay focused by blocking distracting websites and applications during timed work sessions.
+A powerful Windows application designed to help you stay focused by blocking distracting websites and applications during timed work sessions
 
-## Features 
+## 📥 Quick Start
+
+**Option 1: Download Pre-built Executable** (Recommended)
+
+1. Download FocusDock.zip from [Latest Release](https://github.com/Yang-Raymond/HttpHacks/releases/latest)
+2. Unzip it anywhere
+3. Run `app.exe`
+
+**Option 2: Run from Source**
+
+1. Install Python 3.8+
+2. Run `pip install PyQt6 psutil pyinstaller`
+3. Run `pyinstaller --onefile --name app --add-data "blocklist.json;." --add-data "tasks.json;." app.py`
+4. Run `pyinstaller --onefile --name mvp_blocker --add-data "blocklist.json;." mvp_blocker.py`
+5. cd /dist folder
+6. Run `app.exe`.
+
+⚠️ **Windows 10/11 Required** - PAC configuration and app blocking only work on Windows
+
+## Features
 
 ### Timer
+
 - **Customizable countdown timer** with hours, minutes, and seconds
 - **Visual progress indicator** with circular progress arc
 - **Click-to-edit time** - Click on the timer to adjust duration
 
 ### Website & App Blocking
+
 - **Selective blocking** - Choose which websites and apps to block
 - **Toggle all** - Quickly enable/disable all blocks at once
 - **HTTP/HTTPS support** - Blocks websites via local proxy (HTTP & SOCKS5)
@@ -17,12 +38,14 @@ A powerful Windows application designed to help you stay focused by blocking dis
 - **Pattern matching** - Use wildcards to block entire domains (e.g., `*.facebook.com`)
 
 ### Task Management
+
 - **Built-in task list** to track your goals
 - **Add/complete tasks** with descriptions
 - **Auto-delete** - Completed tasks automatically disappear
 - **Persistent storage** - Tasks saved to `tasks.json`
 
 ### Advanced Blocking System
+
 - **PAC (Proxy Auto-Configuration)** - System-wide blocking via Windows proxy settings
 - **Multi-layer blocking** - HTTP proxy (port 3128) + SOCKS5 proxy (port 1080)
 - **App termination modes**:
@@ -30,53 +53,112 @@ A powerful Windows application designed to help you stay focused by blocking dis
   - **Strict mode**: Force kill if app doesn't close
 - **Real-time monitoring** - Continuous scanning for blocked apps
 
-## Installation 
+## 🚀 Getting Started
 
-### Prerequisites
-- **Python 3.8+**
-- **Windows 10/11** (for PAC configuration and app blocking)
+### System Requirements
 
-### Setup
+- **Windows 10 or Windows 11** (Required for PAC configuration and app blocking)
+- **Administrator privileges** (to modify Windows proxy settings)
 
-1. **Clone the repository**
+---
+
+### Option 1: Run Pre-built Executable (Recommended for Users)
+
+**No installation required!** Just download and run.
+
+1. **Download the application**
+
+   - Get `FocusDock.zip` from [GitHub Releases](https://github.com/Yang-Raymond/HttpHacks/releases/latest)
+   - Extract to any folder (e.g., `C:\FocusDock\`)
+
+2. **Verify extracted files**
+
+   ```
+   FocusDock/
+   ├── app.exe           # Main application
+   ├── mvp_blocker.exe   # Blocking engine
+   ├── blocklist.json    # Website/app configuration
+   └── tasks.json        # Task list
+   ```
+
+3. **Launch the app**
+   - Double-click `app.exe`
+   - Done! Start your first focus session.
+
+---
+
+### Option 2: Run from Source (For Developers)
+
+**What you need to install:**
+
+- **Python 3.8 or higher** ([Download here](https://www.python.org/downloads/))
+- **PyQt6** - GUI framework
+- **psutil** - Process monitoring library
+
+**Setup steps:**
+
+1. **Install Python**
+
+   - Download from [python.org](https://www.python.org/downloads/)
+   - ⚠️ **Important:** Check "Add Python to PATH" during installation
+
+2. **Clone the repository**
+
    ```bash
    git clone https://github.com/Yang-Raymond/HttpHacks.git
    cd HttpHacks
    ```
 
-2. **Install dependencies**
+3. **Install required packages**
+
    ```bash
-   pip install -r requirements.txt
+   pip install PyQt6 psutil pyinstaller
    ```
 
-   Required packages:
-   - `PyQt6` - Modern UI framework
-   - `psutil` - Process monitoring for app blocking
-
-3. **Run the application**
+4. **Compile the application**
    ```bash
-   python app.py
+   pyinstaller --onefile --name app --add-data "blocklist.json;." --add-data "tasks.json;." app.py
+   ```
+   ```bash
+   pyinstaller --onefile --name mvp_blocker --add-data "blocklist.json;." mvp_blocker.py
    ```
 
-## Usage 
+5. **Move to the correct directory**
+   ```bash
+   cd dist
+   ```
+
+6. **Copy and Paste "blocklist.json" and "tasks.json" to dist folder**
+
+7. **Run the application**
+   ```bash
+   app.exe
+   ```
+---
+
+## Usage
 
 ### Starting a Focus Session
 
 1. **Add websites/apps to block**
+
    - Click "Add website" or "Add app" in the left panel
    - Enter the website name and URL patterns (e.g., `facebook.com, *.facebook.com`)
    - For apps, enter the executable name (e.g., `discord`, `steam`)
 
 2. **Toggle blocking**
+
    - Use individual toggles to enable/disable specific blocks
    - Use "Toggle All" to quickly enable/disable everything
 
 3. **Set your timer**
+
    - Click on the timer display
    - Scroll or type to set hours, minutes, and seconds
    - Click "OK" to confirm
 
 4. **Start focusing**
+
    - Click the "Focus" button
    - Blocked websites and apps will be inaccessible during the session
    - Click "Stop" to end the session early
@@ -89,6 +171,7 @@ A powerful Windows application designed to help you stay focused by blocking dis
 ### Configuration Files
 
 #### `blocklist.json`
+
 Stores website and app blocking configuration:
 
 ```json
@@ -97,25 +180,19 @@ Stores website and app blocking configuration:
     "Facebook & Meta": {
       "blocked": true,
       "apps": "",
-      "urls": [
-        "*.facebook.com",
-        "facebook.com",
-        "*.instagram.com"
-      ]
+      "urls": ["*.facebook.com", "facebook.com", "*.instagram.com"]
     },
     "Discord": {
       "blocked": false,
       "apps": "discord*",
-      "urls": [
-        "discord.com",
-        "*.discord.com"
-      ]
+      "urls": ["discord.com", "*.discord.com"]
     }
   }
 }
 ```
 
 #### `tasks.json`
+
 Stores your task list:
 
 ```json
@@ -133,6 +210,7 @@ Stores your task list:
 ## How It Works 🔧
 
 ### Website Blocking
+
 1. **PAC Server**: Runs on `localhost:18080` serving proxy auto-config
 2. **HTTP Proxy**: Listens on `127.0.0.1:3128` for HTTP/HTTPS traffic
 3. **SOCKS5 Proxy**: Listens on `127.0.0.1:1080` as fallback
@@ -140,21 +218,24 @@ Stores your task list:
 5. **Request Filtering**: Matches domains against blocklist and blocks/allows accordingly
 
 ### App Blocking
+
 1. **Process Scanning**: Scans running processes every 1-2 seconds
 2. **Pattern Matching**: Uses wildcards to match process names (e.g., `discord*`)
-3. **Termination**: 
+3. **Termination**:
    - **Polite mode**: Sends SIGTERM and waits
    - **Strict mode**: Sends SIGTERM, waits 2 seconds, then SIGKILL if needed
 4. **System Protection**: Never touches critical system processes
 
 ### Logging
+
 All blocking activity is logged to `logs/traffic.log`:
+
 ```
 2025-11-09 14:30:15 CONNECT facebook.com:443 BLOCK
 2025-11-09 14:30:20 APP discord.exe TERMINATE rule=discord*
 ```
 
-## Architecture 
+## Architecture
 
 ```
 HTTPHacks/
@@ -181,16 +262,19 @@ HTTPHacks/
 ## Troubleshooting 🔧
 
 ### Websites still accessible during focus session
+
 - **Check browser**: Close and reopen browser after starting focus session
 - **Clear browser cache**: Some browsers cache DNS/connections
 - **Verify PAC**: Check Windows proxy settings (`Internet Options > Connections > LAN Settings`)
 - **Try incognito mode**: Private browsing doesn't use cached connections
 
 ### Apps keep restarting
+
 - **Check app settings**: Some apps have auto-restart features
 - **Administrator rights**: Run the app as administrator for better process control
 
 ### PAC not clearing after exit
+
 - Run manually: `python mvp_blocker.py --disable-pac-only`
 - Check registry: `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`
 
@@ -203,6 +287,7 @@ python mvp_blocker.py [options]
 ```
 
 Options:
+
 - `--proxy-port PORT` - HTTP proxy port (default: 3128)
 - `--socks-port PORT` - SOCKS5 proxy port (default: 1080)
 - `--pac-port PORT` - PAC server port (default: 18080)
@@ -218,16 +303,6 @@ Options:
 
 ## Development 🛠️
 
-### Building Executable
-
-To create a standalone `.exe`:
-
-1.  ```bash
-    pyinstaller --onefile --name app --add-data "blocklist.json;." --add-data "tasks.json;." app.py
-    pyinstaller --onefile --name mvp_blocker --add-data "blocklist.json;." mvp_blocker.py
-    ```
-2. Create blocklist.json and tasks.json in the same folder as the executable
-
 ### Adding New Features
 
 1. **UI Components**: Add to `UI/` directory following the existing pattern
@@ -240,4 +315,3 @@ To create a standalone `.exe`:
 - **No external connections**: Blocking is done locally
 - **No data collection**: Nothing is sent to external servers
 - **Open source**: Full code transparency
-
