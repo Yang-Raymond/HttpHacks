@@ -228,12 +228,17 @@ class MainWindow(QMainWindow):
                 name, url = dialog.get_values()
                 
                 if name and url:
-                    if name in self.website_widgets:
-                        QMessageBox.warning(self, "Exists", f"{name} already exists.")
-                        return
-                    
+                    # Check if it's a completely new entry
+                    is_new_entry = name not in self.manager.get_all_sites()
+
                     self.manager.add_website(name, url)
-                    self.add_website_widget(name, False)
+
+                    # Only add widget if it's a brand new entry
+                    if is_new_entry:
+                        self.add_website_widget(name, False)
+                        QMessageBox.information(self, "Success", f"{name} has been added!")
+                    else:
+                        QMessageBox.information(self, "Updated", f"URLs added to existing {name}.")
                 else:
                     QMessageBox.warning(self, "Input Error", "Please enter both website name and URL.")
         
@@ -242,15 +247,20 @@ class MainWindow(QMainWindow):
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 name, exe = dialog.get_values()
                 
-                if name and exe:
-                    if name in self.website_widgets:
-                        QMessageBox.warning(self, "Exists", f"{name} already exists.")
-                        return
-                    
-                    self.manager.add_app(name, exe)
+            if name and exe:
+                # Check if it's a completely new entry
+                is_new_entry = name not in self.manager.get_all_sites()
+                
+                self.manager.add_app(name, exe)
+                
+                # Only add widget if it's a brand new entry
+                if is_new_entry:
                     self.add_website_widget(name, False)
+                    QMessageBox.information(self, "Success", f"{name} has been added!")
                 else:
-                    QMessageBox.warning(self, "Input Error", "Please enter both app name and executable.")
+                    QMessageBox.information(self, "Updated", f"App executable added to existing {name}.")
+            else:
+                QMessageBox.warning(self, "Input Error", "Please enter both app name and executable.")
 
     def update_block_status(self, site_name, blocked: bool):
         # Update toggle to reflect if site is blocked
