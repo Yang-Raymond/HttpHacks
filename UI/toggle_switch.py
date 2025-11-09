@@ -1,3 +1,6 @@
+# ToggleSwitch module
+# Implements a custom toggle switch widget for use in the UI.
+
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt6.QtGui import QPainter, QColor

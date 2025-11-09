@@ -1,3 +1,6 @@
+# TaskInput module
+# Provides an input field for adding new tasks to the panel.
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLineEdit, QTextEdit

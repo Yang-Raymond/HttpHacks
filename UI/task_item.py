@@ -1,3 +1,6 @@
+# TaskItem module
+# Represents an individual task item in the task panel.
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QCheckBox

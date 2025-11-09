@@ -13,6 +13,7 @@ class _Rule:
     lower: str
 
     def match_name(self, name: str) -> bool:
+        # Match process name against rule pattern (case-insensitive)
         return fnmatch.fnmatchcase(name.lower(), self.lower)
 
     def __repr__(self) -> str:
@@ -20,6 +21,7 @@ class _Rule:
 
 
 class AppBlocker:
+    """Periodically scans running processes and terminates those matching block patterns."""
     def __init__(
         self,
         patterns: Iterable[str],
@@ -63,9 +65,11 @@ class AppBlocker:
             return
 
     def stop(self) -> None:
+        # Signal to stop scanning
         self._stop.set()
 
     async def _scan_once(self) -> None:
+        # Scan all processes and apply blocking rules
         for proc in psutil.process_iter(attrs=["pid", "name", "exe"]):
             try:
                 pid = proc.info.get("pid") or proc.pid
@@ -101,12 +105,14 @@ class AppBlocker:
                 await self._log("APP", "scan", 0, f"ERROR {type(e).__name__}", str(e))
 
     def _matches_any(self, lname: str, lbase: str) -> Tuple[bool, str]:
+        # Check if process name matches any rule
         for r in self.rules:
             if r.match_name(lname) or r.match_name(lbase):
                 return True, r.pattern
         return False, ""
 
     async def _terminate(self, proc: psutil.Process, display: str, rule: str, escalate: bool) -> None:
+        # Attempt to terminate (and possibly kill) a process
         pid = proc.pid
         try:
             proc.terminate()
@@ -128,6 +134,7 @@ class AppBlocker:
             await self._log("APP", display, pid, f"ERROR {type(e).__name__}", f"rule={rule} {e}")
 
     async def _log(self, kind: str, host: str, port: int, decision: str, rule: str) -> None:
+        # Log blocking actions
         if self.logger:
             try:
                 await self.logger.write(kind, host, port, decision, rule)
@@ -138,6 +145,7 @@ class AppBlocker:
 
 # ---------- Domain Blocklist ----------
 class DomainMatcher:
+    """Checks if a domain is blocked or explicitly allowed."""
     def __init__(self, blocked_domains, unblocked_domains=None):
         unblocked_domains = unblocked_domains or []
         self.blocked_exact, self.blocked_suffixes = set(), []
@@ -166,6 +174,7 @@ class DomainMatcher:
                 self.unblocked_suffixes.append("." + d)
 
     def is_blocked(self, host: str) -> bool:
+        # Determine if a host should be blocked
         h = host.lower().rstrip(".")
 
         # Explicitly allowed — if in unblocked list, never block
@@ -181,12 +190,14 @@ class DomainMatcher:
 
 # ---------- Logging ----------
 class Logger:
+    """Async file logger for traffic and blocking events."""
     def __init__(self, path):
         self.path = path
         os.makedirs(os.path.dirname(path), exist_ok=True)
         self._lock = asyncio.Lock()
 
     async def write(self, kind, host, port, decision, rule=""):
+        # Write a log entry to file
         line = f'{time.strftime("%Y-%m-%d %H:%M:%S")} {kind} {host}:{port} {decision}'
         if rule:
             line += f' {rule}'
@@ -207,9 +218,11 @@ PAC_TEMPLATE = """function FindProxyForURL(url, host) {
 }"""
 
 class PacHandler(BaseHTTPRequestHandler):
+    """Serves a PAC file for proxy auto-configuration."""
     proxy_port = 3128
     socks_port = 1080
     def do_GET(self):
+        # Serve PAC file or 404
         if self.path.startswith("/proxy.pac"):
             body = PAC_TEMPLATE % {"proxy_port": self.proxy_port, "socks_port": self.socks_port}
             self.send_response(200)
@@ -222,6 +235,7 @@ class PacHandler(BaseHTTPRequestHandler):
     def log_message(self, *_): pass
 
 def start_pac_server(port: int, proxy_port: int, socks_port:int):
+    """Start PAC HTTP server in a background thread."""
     PacHandler.proxy_port = proxy_port
     PacHandler.socks_port = socks_port
     httpd = HTTPServer(("127.0.0.1", port), PacHandler)
@@ -230,10 +244,12 @@ def start_pac_server(port: int, proxy_port: int, socks_port:int):
 
 # ---------- HTTP/HTTPS (CONNECT) proxy ----------
 class HttpProxy:
+    """Minimal HTTP/HTTPS proxy with domain blocking."""
     def __init__(self, host, port, matcher: DomainMatcher, logger: Logger):
         self.host, self.port, self.matcher, self.logger = host, port, matcher, logger
 
     async def _write_resp(self, w, code, text):
+        # Send HTTP response and close connection
         body = f"{code} {text}\n"
         resp = f"HTTP/1.1 {code} {text}\r\nContent-Length: {len(body)}\r\nConnection: close\r\n\r\n{body}"
         w.write(resp.encode()); await w.drain(); w.close(); 
@@ -241,6 +257,7 @@ class HttpProxy:
         except: pass
 
     async def _pipe(self, r, w):
+        # Pipe data between two streams
         try:
             while True:
                 chunk = await r.read(65536)
@@ -249,6 +266,7 @@ class HttpProxy:
         except: pass
 
     async def _tunnel(self, cr, cw, host, port):
+        # Handle HTTPS CONNECT tunneling
         try:
             ur, uw = await asyncio.open_connection(host, port)
         except:
@@ -265,6 +283,7 @@ class HttpProxy:
             except: pass
 
     async def _forward_http(self, cr, cw, first_chunk, host, port):
+        # Forward HTTP request and response
         try:
             ur, uw = await asyncio.open_connection(host, port)
         except:
@@ -281,6 +300,7 @@ class HttpProxy:
             except: pass
 
     async def handle(self, r: asyncio.StreamReader, w: asyncio.StreamWriter):
+        # Handle incoming proxy connection
         try:
             data = await r.readuntil(b"\r\n\r\n")
         except asyncio.IncompleteReadError:
@@ -314,16 +334,19 @@ class HttpProxy:
         await self._write_resp(w, 405, "Method Not Allowed")
 
     async def run(self):
+        # Start proxy server
         srv = await asyncio.start_server(self.handle, self.host, self.port)
         print(f"[HTTP proxy] 127.0.0.1:{self.port}")
         async with srv: await srv.serve_forever()
 
 # ---------- Minimal SOCKS5 (TCP only) ----------
 class Socks5Proxy:
+    """Minimal SOCKS5 proxy with domain blocking."""
     def __init__(self, host, port, matcher: DomainMatcher, logger: Logger):
         self.host, self.port, self.matcher, self.logger = host, port, matcher, logger
 
     async def handle(self, r, w):
+        # Handle SOCKS5 connection and block as needed
         try:
             ver_n = await r.readexactly(2)
             if ver_n[0] != 5: w.close(); return
@@ -380,12 +403,14 @@ class Socks5Proxy:
             except: pass
 
     async def run(self):
+        # Start SOCKS5 server
         srv = await asyncio.start_server(self.handle, self.host, self.port)
         print(f"[SOCKS5]     127.0.0.1:{self.port}")
         async with srv: await srv.serve_forever()
 
 # ---------- Windows per-user PAC toggle (HKCU) ----------
 def set_user_pac(url: str):
+    """Set PAC URL for current Windows user."""
     global _pac_enabled
     if sys.platform != "win32": 
         print("[INFO] PAC toggle only on Windows."); return
@@ -424,6 +449,7 @@ def set_user_pac(url: str):
         print(f"[WARN] Could not set PAC automatically: {e}")
 
 def clear_user_pac():
+    """Clear PAC URL for current Windows user."""
     if sys.platform != "win32": return
     try:
         import winreg
@@ -443,6 +469,7 @@ def clear_user_pac():
 
 # ---------- Config Loading ----------
 def load_config(blocklist_path):
+    """Load blocklist config from JSON file."""
     # Load domain blocklist
     if not blocklist_path or not os.path.exists(blocklist_path):
         raise FileNotFoundError(f"Blocklist file not found: {blocklist_path}")
@@ -474,6 +501,7 @@ def load_config(blocklist_path):
 
 # ---------- Main ----------
 async def main_async(args):
+    """Main async entrypoint: start proxies, PAC, and app blocker."""
     blocked_domains, unblocked_domains, blocked_apps, unblocked_apps = load_config(args.blocklist)
     matcher = DomainMatcher(blocked_domains, unblocked_domains)
     logger = Logger(args.log)
@@ -515,6 +543,7 @@ async def main_async(args):
     await asyncio.gather(*tasks)
 
 def main():
+    """Parse arguments and run main logic."""
     global _pac_enabled
     p = argparse.ArgumentParser("Integrated Domain + App Blocker")
     p.add_argument("--proxy-port", type=int, default=3128)

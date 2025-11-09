@@ -1,3 +1,6 @@
+# WebsiteToggleWidget module
+# Provides a widget for toggling block status of websites/apps in the UI.
+
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
 from UI.toggle_switch import ToggleSwitch
 
@@ -35,7 +38,9 @@ class WebsiteToggleWidget(QWidget):
         self.setLayout(layout)
 
     def is_blocked(self) -> bool:
+        """Return the blocking status of the website."""
         return self.toggle.isChecked()
 
     def get_website(self) -> str:
+        """Return the name of the website."""
         return self.website_name

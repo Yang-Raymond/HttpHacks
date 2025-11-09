@@ -1,4 +1,6 @@
-"""UI components for the Focus Timer App"""
+"""UI package for Focus Dock application
+This package contains all user interface components, dialogs, and widgets used in the app.
+Each module provides a specific part of the UI, such as main window, dialogs, and custom widgets."""
 
 from .toggle_switch import ToggleSwitch
 from .website_toggle_widget import WebsiteToggleWidget
