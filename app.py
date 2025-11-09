@@ -3,11 +3,72 @@ from PyQt6.QtWidgets import (
     QSpacerItem, QSizePolicy, QMainWindow, QDialog, QFrame, QLineEdit, 
     QMessageBox, QScrollArea, QCheckBox
 )
-from PyQt6.QtCore import Qt, QTimer, QRect
+from PyQt6.QtCore import Qt, QTimer, QRect, pyqtSignal, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt6.QtGui import QFont, QPainter, QColor, QPen, QKeyEvent, QWheelEvent
 from blocklist_manager import BlocklistManager
 import subprocess, sys, threading
 import json
+
+
+# ============================================================================
+# ToggleSwitch Widget
+# ============================================================================
+
+class ToggleSwitch(QWidget):
+    """Custom toggle switch widget"""
+    toggled = pyqtSignal(bool)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._checked = False
+        self._circle_position = 0
+        
+        self.setFixedSize(50, 24)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+        self.animation = QPropertyAnimation(self, b"circle_position", self)
+        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self.animation.setDuration(200)
+        
+    @pyqtProperty(int)
+    def circle_position(self):
+        return self._circle_position
+    
+    @circle_position.setter
+    def circle_position(self, pos):
+        self._circle_position = pos
+        self.update()
+    
+    def isChecked(self):
+        return self._checked
+    
+    def setChecked(self, checked):
+        if self._checked != checked:
+            self._checked = checked
+            self.animation.setStartValue(self._circle_position)
+            self.animation.setEndValue(26 if checked else 0)
+            self.animation.start()
+            self.toggled.emit(checked)
+    
+    def mousePressEvent(self, event):
+        self.setChecked(not self._checked)
+    
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Draw background track
+        if self._checked:
+            painter.setBrush(QColor("#4CAF50"))
+        else:
+            painter.setBrush(QColor("#CCCCCC"))
+        
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRoundedRect(0, 0, 50, 24, 12, 12)
+        
+        # Draw circle
+        painter.setBrush(QColor("#FFFFFF"))
+        painter.drawEllipse(2 + self._circle_position, 2, 20, 20)
 
 
 # ============================================================================
@@ -21,8 +82,9 @@ class WebsiteToggleWidget(QWidget):
         self.website_name = website_name
         layout = QHBoxLayout()
         self.label = QLabel(website_name)
-        self.toggle = QCheckBox("Block")
+        self.toggle = ToggleSwitch()
         layout.addWidget(self.label)
+        layout.addStretch()
         layout.addWidget(self.toggle)
         self.setLayout(layout)
 
@@ -103,8 +165,8 @@ class MainWindow(QMainWindow):
         if site_name in self.website_widgets:
             return
         widget = WebsiteToggleWidget(site_name)
-        widget.toggle.stateChanged.connect(
-            lambda _: self.update_block_status(site_name, widget.is_blocked())
+        widget.toggle.toggled.connect(
+            lambda checked: self.update_block_status(site_name, checked)
         )
         self.left_layout.addWidget(widget)
         self.website_widgets[site_name] = widget
