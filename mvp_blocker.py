@@ -1,10 +1,148 @@
-import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse
+import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse, fnmatch
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from dataclasses import dataclass
+from typing import Iterable, List, Optional, Tuple
+
+try:
+    import psutil  # type: ignore
+except ImportError as e:
+    print("[WARN] psutil not found. App blocking disabled. Install: pip install psutil")
+    psutil = None
 
 # Track if we enabled PAC
 _pac_enabled = False
 
-# ---------- Blocklist ----------
+# ---------- App Blocker ----------
+@dataclass(frozen=True)
+class _Rule:
+    pattern: str
+    lower: str
+
+    def match_name(self, name: str) -> bool:
+        return fnmatch.fnmatchcase(name.lower(), self.lower)
+
+    def __repr__(self) -> str:
+        return f"<Rule {self.pattern!r}>"
+
+
+class AppBlocker:
+    def __init__(
+        self,
+        patterns: Iterable[str],
+        mode: str = "polite",
+        grace_seconds: float = 2.0,
+        scan_interval: float = 2.0,
+        logger=None,
+        dry_run: bool = False,
+    ) -> None:
+        self.rules: List[_Rule] = []
+        for p in patterns or []:
+            p = (p or "").strip()
+            if not p:
+                continue
+            self.rules.append(_Rule(pattern=p, lower=p.lower()))
+        self.mode = mode.lower().strip() if mode else "polite"
+        if self.mode not in ("polite", "strict"):
+            self.mode = "polite"
+        self.grace = max(0.0, float(grace_seconds))
+        self.interval = max(0.5, float(scan_interval))
+        self.logger = logger
+        self.dry = bool(dry_run)
+        self._stop = asyncio.Event()
+        self._self_pid = os.getpid()
+
+        self._never = {
+            "system", "idle", "init", "launchd", "systemd", "wininit.exe", "services.exe",
+            "csrss.exe", "lsass.exe", "smss.exe"
+        }
+
+    async def run(self) -> None:
+        """Main periodic scan loop."""
+        try:
+            while not self._stop.is_set():
+                await self._scan_once()
+                try:
+                    await asyncio.wait_for(self._stop.wait(), timeout=self.interval)
+                except asyncio.TimeoutError:
+                    pass
+        except asyncio.CancelledError:
+            return
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    async def _scan_once(self) -> None:
+        for proc in psutil.process_iter(attrs=["pid", "name", "exe"]):
+            try:
+                pid = proc.info.get("pid") or proc.pid
+                if pid == self._self_pid:
+                    continue
+                name = (proc.info.get("name") or "") or ""
+                exe = (proc.info.get("exe") or "") or ""
+                base = os.path.basename(exe) if exe else name
+                lname = (name or "").lower()
+                lbase = (base or "").lower()
+
+                if lname in self._never or lbase in self._never:
+                    continue
+
+                matched, rule = self._matches_any(lname, lbase)
+                if not matched:
+                    continue
+
+                if self.dry:
+                    await self._log("APP", f"{base or name}", 0, "MATCH-DRYRUN", rule)
+                    continue
+
+                if self.mode == "polite":
+                    await self._terminate(proc, base or name, rule, escalate=False)
+                else:
+                    await self._terminate(proc, base or name, rule, escalate=True)
+
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                continue
+            except psutil.AccessDenied:
+                await self._log("APP", str(proc.pid), 0, "SKIP-ACCESSDENIED", "")
+            except Exception as e:
+                await self._log("APP", "scan", 0, f"ERROR {type(e).__name__}", str(e))
+
+    def _matches_any(self, lname: str, lbase: str) -> Tuple[bool, str]:
+        for r in self.rules:
+            if r.match_name(lname) or r.match_name(lbase):
+                return True, r.pattern
+        return False, ""
+
+    async def _terminate(self, proc: psutil.Process, display: str, rule: str, escalate: bool) -> None:
+        pid = proc.pid
+        try:
+            proc.terminate()
+            await self._log("APP", display, pid, "TERMINATE", f"rule={rule}")
+            try:
+                await asyncio.to_thread(proc.wait, timeout=self.grace if escalate else self.grace)
+            except psutil.TimeoutExpired:
+                if escalate:
+                    try:
+                        proc.kill()
+                        await self._log("APP", display, pid, "KILL", f"rule={rule}")
+                    except psutil.NoSuchProcess:
+                        pass
+        except psutil.NoSuchProcess:
+            pass
+        except psutil.AccessDenied:
+            await self._log("APP", display, pid, "SKIP-ACCESSDENIED", f"rule={rule}")
+        except Exception as e:
+            await self._log("APP", display, pid, f"ERROR {type(e).__name__}", f"rule={rule} {e}")
+
+    async def _log(self, kind: str, host: str, port: int, decision: str, rule: str) -> None:
+        if self.logger:
+            try:
+                await self.logger.write(kind, host, port, decision, rule)
+                return
+            except Exception:
+                pass
+        print(f"[{kind}] {host}:{port} {decision} {rule}")
+
+# ---------- Domain Blocklist ----------
 class DomainMatcher:
     def __init__(self, domains):
         exact, suffixes = set(), []
@@ -26,8 +164,11 @@ class Logger:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         self._lock = asyncio.Lock()
 
-    async def write(self, kind, host, port, decision):
-        line = f'{time.strftime("%Y-%m-%d %H:%M:%S")} {kind} {host}:{port} {decision}\n'
+    async def write(self, kind, host, port, decision, rule=""):
+        line = f'{time.strftime("%Y-%m-%d %H:%M:%S")} {kind} {host}:{port} {decision}'
+        if rule:
+            line += f' {rule}'
+        line += '\n'
         async with self._lock:
             with open(self.path, "a", encoding="utf-8") as f:
                 f.write(line)
@@ -137,7 +278,6 @@ class HttpProxy:
                 await self._write_resp(w, 403, "Forbidden"); return
             await self._tunnel(r, w, host, port); return
 
-        # Absolute-URL HTTP via proxy
         if method in ("GET","POST","HEAD","PUT","DELETE","OPTIONS","PATCH"):
             u = urllib.parse.urlsplit(target)
             if not u.hostname:
@@ -163,26 +303,24 @@ class Socks5Proxy:
 
     async def handle(self, r, w):
         try:
-            # greeting
             ver_n = await r.readexactly(2)
             if ver_n[0] != 5: w.close(); return
             n = ver_n[1]
-            _ = await r.readexactly(n)  # methods
-            w.write(b"\x05\x00"); await w.drain()  # no auth
+            _ = await r.readexactly(n)
+            w.write(b"\x05\x00"); await w.drain()
 
-            # request
-            head = await r.readexactly(4)  # ver, cmd, rsv, atyp
-            if head[0] != 5 or head[1] not in (1,):  # only CONNECT
+            head = await r.readexactly(4)
+            if head[0] != 5 or head[1] not in (1,):
                 w.write(b"\x05\x07\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
 
             atyp = head[3]
-            if atyp == 1:  # IPv4
+            if atyp == 1:
                 addr = ".".join(str(x) for x in await r.readexactly(4))
                 host = addr
-            elif atyp == 3:  # domain
+            elif atyp == 3:
                 ln = (await r.readexactly(1))[0]
                 host = (await r.readexactly(ln)).decode()
-            elif atyp == 4:  # IPv6
+            elif atyp == 4:
                 raw = await r.readexactly(16)
                 import ipaddress; host = str(ipaddress.IPv6Address(raw))
             else:
@@ -198,7 +336,6 @@ class Socks5Proxy:
                 ur, uw = await asyncio.open_connection(host, port)
             except:
                 w.write(b"\x05\x05\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain(); w.close(); return
-            # success reply
             w.write(b"\x05\x00\x00\x01\x00\x00\x00\x00\x00\x00"); await w.drain()
 
             async def pipe(a, b):
@@ -262,16 +399,33 @@ def clear_user_pac():
     except Exception as e:
         print(f"[WARN] Could not clear PAC automatically: {e}")
 
-# ---------- CLI ----------
-def load_blocklist(path):
-    if not path or not os.path.exists(path): 
-        return ["*.steamcommunity.com", "*.steampowered.com", "login.example", "*.tracker.test"]
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return data.get("blocked", [])
+# ---------- Config Loading ----------
+def load_config(blocklist_path, apps_path):
+    # Load domain blocklist
+    domains = []
+    if blocklist_path and os.path.exists(blocklist_path):
+        with open(blocklist_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        domains = data.get("blocked", [])
+    else:
+        domains = ["*.steamcommunity.com", "*.steampowered.com"]
+    
+    # Load app patterns
+    apps = []
+    if apps_path and os.path.exists(apps_path):
+        with open(apps_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        apps = data.get("apps", [])
+    else:
+        apps = ["discord*", "steam*"]
+    
+    return domains, apps
 
+# ---------- Main ----------
 async def main_async(args):
-    matcher = DomainMatcher(load_blocklist(args.blocklist))
+    domains, app_patterns = load_config(args.blocklist, args.apps)
+    
+    matcher = DomainMatcher(domains)
     logger = Logger(args.log)
 
     # PAC
@@ -285,21 +439,43 @@ async def main_async(args):
     http = HttpProxy("127.0.0.1", args.proxy_port, matcher, logger)
     socks = Socks5Proxy("127.0.0.1", args.socks_port, matcher, logger)
     
+    tasks = [http.run(), socks.run()]
+    
+    # App Blocker
+    if psutil and app_patterns:
+        app_blocker = AppBlocker(
+            patterns=app_patterns,
+            mode=args.app_mode,
+            grace_seconds=args.app_grace,
+            scan_interval=args.app_scan,
+            logger=logger,
+            dry_run=args.app_dry_run
+        )
+        tasks.append(app_blocker.run())
+        print(f"[APP BLOCK]  {len(app_patterns)} patterns, mode={args.app_mode}")
+    elif app_patterns:
+        print("[WARN] App blocking disabled (psutil not installed)")
+    
     print("\n[INFO] Press Ctrl+C to stop")
     print("[INFO] Blocking is active\n")
     
-    await asyncio.gather(http.run(), socks.run())
+    await asyncio.gather(*tasks)
 
 def main():
     global _pac_enabled
-    p = argparse.ArgumentParser("MVP Domain Blocker (proxy+PAC, Python)")
+    p = argparse.ArgumentParser("Integrated Domain + App Blocker")
     p.add_argument("--proxy-port", type=int, default=3128)
     p.add_argument("--socks-port", type=int, default=1080)
     p.add_argument("--pac-port",   type=int, default=18080)
     p.add_argument("--enable-pac", action="store_true")
     p.add_argument("--disable-pac", action="store_true")
     p.add_argument("--blocklist",  type=str, default="blocklist.json")
+    p.add_argument("--apps",       type=str, default="apps.json")
     p.add_argument("--log",        type=str, default=os.path.join("logs","traffic.log"))
+    p.add_argument("--app-mode",   type=str, default="strict", choices=["polite", "strict"])
+    p.add_argument("--app-grace",  type=float, default=2.0)
+    p.add_argument("--app-scan",   type=float, default=2.0)
+    p.add_argument("--app-dry-run", action="store_true")
     args = p.parse_args()
     
     try:
