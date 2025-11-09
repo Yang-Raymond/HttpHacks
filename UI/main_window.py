@@ -7,6 +7,7 @@ from PyQt6.QtGui import QColor
 from UI.blocklist_manager import BlocklistManager
 from UI.website_toggle_widget import WebsiteToggleWidget
 from UI.clock_widget import ClockWidget
+from UI.task_panel import TaskPanel
 from UI.add_website_dialog import AddWebsiteDialog
 from UI.add_app_dialog import AddAppDialog
 
@@ -15,7 +16,7 @@ class MainWindow(QMainWindow):
     def __init__(self, blocklist_path="blocklist.json"):
         super().__init__()
         self.setWindowTitle('Focus Timer App')
-        self.setGeometry(100, 100, 1100, 700)
+        self.setGeometry(100, 100, 1400, 700)
 
         # Windows 11 styling
         self.setStyleSheet("""
@@ -192,16 +193,21 @@ class MainWindow(QMainWindow):
             is_blocked = self.manager.is_blocked(site_name)
             self.add_website_widget(site_name, is_blocked)
 
-        # RIGHT PANEL: Timer/Clock Widget
+        # Add both panels to main layout
+        # MIDDLE PANEL: Timer/Clock Widget =====
         self.clock_widget = ClockWidget(self.manager)
 
         # Connect timer signals to enable/disable left panel
         self.clock_widget.timer_started.connect(lambda: self.set_left_panel_enabled(False))
         self.clock_widget.timer_stopped.connect(lambda: self.set_left_panel_enabled(True))
 
-        # Add both panels to main layout
+        # RIGHT PANEL: Tasks
+        self.task_panel = TaskPanel()
+
+        # Add all panels to main layout
         main_layout.addWidget(left_container, 1)
-        main_layout.addWidget(self.clock_widget, 3)
+        main_layout.addWidget(self.clock_widget, 2)
+        main_layout.addWidget(self.task_panel, 1)
 
     def add_website_widget(self, site_name, is_blocked=False):
         if site_name in self.website_widgets:

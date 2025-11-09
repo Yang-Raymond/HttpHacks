@@ -53,7 +53,7 @@ class AddWebsiteDialog(QDialog):
                 background-color: #F9F9F9;
                 border: 2px solid #E1E1E1;
                 border-radius: 6px;
-                padding: 12px 14px;
+                padding: 6px 7px;
                 font-size: 14px;
                 font-family: 'Segoe UI';
                 color: #1F1F1F;
@@ -84,7 +84,7 @@ class AddWebsiteDialog(QDialog):
                 background-color: #F9F9F9;
                 border: 2px solid #E1E1E1;
                 border-radius: 6px;
-                padding: 12px 14px;
+                padding: 6px 7px;
                 font-size: 14px;
                 font-family: 'Segoe UI';
                 color: #1F1F1F;
