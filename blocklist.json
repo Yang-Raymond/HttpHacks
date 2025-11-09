@@ -1,7 +1,8 @@
 {
   "websites": {
     "Facebook & Meta": {
-      "blocked": true,
+      "blocked": false,
+      "apps": "",
       "urls": [
         "*.facebook.com",
         "facebook.com",
@@ -19,7 +20,8 @@
       ]
     },
     "TikTok": {
-      "blocked": false,
+      "blocked": true,
+      "apps": "",
       "urls": [
         "*.tiktok.com",
         "tiktok.com",
@@ -34,6 +36,7 @@
     },
     "Reddit": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "*.reddit.com",
         "reddit.com",
@@ -45,6 +48,7 @@
     },
     "Twitter / X": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "x.com",
         "*.x.com",
@@ -58,6 +62,7 @@
     },
     "Snapchat": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "*.snapchat.com",
         "snapchat.com",
@@ -68,6 +73,7 @@
     },
     "Discord": {
       "blocked": false,
+      "apps": "discord*",
       "urls": [
         "discord.com",
         "*.discord.com",
@@ -82,6 +88,7 @@
     },
     "Twitch": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "twitch.tv",
         "*.twitch.tv",
@@ -93,6 +100,7 @@
     },
     "Netflix": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "netflix.com",
         "*.netflix.com",
@@ -108,6 +116,7 @@
     },
     "Prime Video": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "primevideo.com",
         "*.primevideo.com",
@@ -119,6 +128,7 @@
     },
     "Hulu": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "hulu.com",
         "*.hulu.com",
@@ -128,6 +138,7 @@
     },
     "Disney+": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "disneyplus.com",
         "*.disneyplus.com",
@@ -141,6 +152,7 @@
     },
     "Max (HBO)": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "max.com",
         "*.max.com",
@@ -150,6 +162,7 @@
     },
     "Crunchyroll / VRV": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "crunchyroll.com",
         "*.crunchyroll.com",
@@ -159,6 +172,7 @@
     },
     "Apple Music / iTunes": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "music.apple.com",
         "*.music.apple.com",
@@ -170,13 +184,15 @@
     },
     "SoundCloud": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "soundcloud.com",
         "*.soundcloud.com"
       ]
     },
     "Steam": {
-      "blocked": false,
+      "blocked": true,
+      "apps": "steam*",
       "urls": [
         "steamcommunity.com",
         "*.steamcommunity.com",
@@ -196,6 +212,7 @@
     },
     "Epic Games / Fortnite": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "epicgames.com",
         "*.epicgames.com",
@@ -205,6 +222,7 @@
     },
     "Riot Games": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "*.riotgames.com",
         "auth.riotgames.com",
@@ -215,6 +233,13 @@
         "rso.auth.riotgames.com",
         "rso.si.riotgames.com",
         "rso.play.riotgames.com",
+        "*.riotcdn.net"
+      ]
+    },
+    "League of Legends": {
+      "blocked": false,
+      "apps": "LeagueClientUx*",
+      "urls": [
         "*.leagueoflegends.com",
         "status.leagueoflegends.com",
         "lq.na1.lol.riotgames.com",
@@ -222,7 +247,6 @@
         "glz-na1-1.na1.a.pvp.net",
         "glz-eu1-1.eu1.a.pvp.net",
         "*.pvp.net",
-        "*.riotcdn.net",
         "lolstatic-a.akamaihd.net",
         "*.hwcdn.net",
         "*.akamaized.net",
@@ -233,6 +257,7 @@
     },
     "Blizzard / Battle.net": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "battle.net",
         "*.battle.net",
@@ -244,6 +269,7 @@
     },
     "EA / Origin": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "ea.com",
         "*.ea.com",
@@ -253,6 +279,7 @@
     },
     "Ubisoft": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "ubisoft.com",
         "*.ubisoft.com",
@@ -264,6 +291,7 @@
     },
     "Rockstar Games": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "rockstargames.com",
         "*.rockstargames.com",
@@ -272,6 +300,7 @@
     },
     "GOG": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "gog.com",
         "*.gog.com",
@@ -281,6 +310,7 @@
     },
     "Xbox": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "xbox.com",
         "*.xbox.com",
@@ -292,6 +322,7 @@
     },
     "PlayStation": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "playstation.com",
         "*.playstation.com",
@@ -301,6 +332,7 @@
     },
     "Telegram": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "telegram.org",
         "*.telegram.org",
@@ -314,6 +346,7 @@
     },
     "Pinterest": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "pinterest.com",
         "*.pinterest.com",
@@ -323,6 +356,7 @@
     },
     "Tumblr": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "tumblr.com",
         "*.tumblr.com"
@@ -330,6 +364,7 @@
     },
     "DeviantArt": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "deviantart.com",
         "*.deviantart.com"
@@ -337,6 +372,7 @@
     },
     "Roblox": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "roblox.com",
         "*.roblox.com",
@@ -346,6 +382,7 @@
     },
     "Kick & Rumble": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "kick.com",
         "*.kick.com",
@@ -355,6 +392,7 @@
     },
     "WeChat / QQ": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "wechat.com",
         "*.wechat.com",
@@ -364,6 +402,7 @@
     },
     "VK": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "vk.com",
         "*.vk.com"
@@ -371,6 +410,7 @@
     },
     "Spotify": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "spotify.com",
         "*.spotify.com",
@@ -383,6 +423,7 @@
     },
     "YouTube": {
       "blocked": false,
+      "apps": "",
       "urls": [
         "*.youtube.com",
         "youtube.com",

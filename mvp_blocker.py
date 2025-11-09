@@ -422,7 +422,7 @@ def clear_user_pac():
         print(f"[WARN] Could not clear PAC automatically: {e}")
 
 # ---------- Config Loading ----------
-def load_config(blocklist_path, apps_path):
+def load_config(blocklist_path):
     # Load domain blocklist
     if not blocklist_path or not os.path.exists(blocklist_path):
         raise FileNotFoundError(f"Blocklist file not found: {blocklist_path}")
@@ -432,30 +432,30 @@ def load_config(blocklist_path, apps_path):
 
     blocked_domains = []
     unblocked_domains = []
+    blocked_apps = []
+    unblocked_apps = []
 
-    # Flatten blocked lists
-    for group in data.get("blocked", {}).values():
-        blocked_domains.extend(group)
+    websites = data.get("websites", {})
+    for name, info in websites.items():
+        blocked_flag = info.get("blocked", False)
+        urls = info.get("urls", [])
+        app_pattern = info.get("apps", "").strip()
 
-    # Flatten unblocked lists
-    for group in data.get("unblocked", {}).values():
-        unblocked_domains.extend(group)
+        if blocked_flag:
+            blocked_domains.extend(urls)
+            if app_pattern:
+                blocked_apps.append(app_pattern)
+        else:
+            unblocked_domains.extend(urls)
+            if app_pattern:
+                unblocked_apps.append(app_pattern)
 
-    # Load app patterns
-    apps = []
-    if apps_path and os.path.exists(apps_path):
-        with open(apps_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        apps = data.get("apps", [])
-    else:
-        apps = ["discord*", "steam*"]
-
-    return blocked_domains, unblocked_domains, apps
+    return blocked_domains, unblocked_domains, blocked_apps, unblocked_apps
 
 # ---------- Main ----------
 async def main_async(args):
-    blocked, unblocked, app_patterns = load_config(args.blocklist, args.apps)
-    matcher = DomainMatcher(blocked, unblocked)
+    blocked_domains, unblocked_domains, blocked_apps, unblocked_apps = load_config(args.blocklist)
+    matcher = DomainMatcher(blocked_domains, unblocked_domains)
     logger = Logger(args.log)
 
     # PAC server
@@ -474,6 +474,7 @@ async def main_async(args):
     tasks = [http.run(), socks.run()]
     
     # App Blocker
+    app_patterns = blocked_apps
     if psutil and app_patterns:
         app_blocker = AppBlocker(
             patterns=app_patterns,
