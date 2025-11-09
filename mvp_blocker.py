@@ -1,13 +1,7 @@
-import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse, fnmatch, argparse
+import argparse, asyncio, json, os, sys, time, ctypes, threading, urllib.parse, fnmatch, argparse, psutil
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Tuple
-
-try:
-    import psutil  # type: ignore
-except ImportError as e:
-    print("[WARN] psutil not found. App blocking disabled. Install: pip install psutil")
-    psutil = None
 
 # Track if we enabled PAC
 _pac_enabled = False
