@@ -4,18 +4,19 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-from blocklist_manager import BlocklistManager
+from UI.blocklist_manager import BlocklistManager
 from UI.website_toggle_widget import WebsiteToggleWidget
 from UI.clock_widget import ClockWidget
+from UI.task_panel import TaskPanel
 from UI.add_website_dialog import AddWebsiteDialog
 from UI.add_app_dialog import AddAppDialog
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, blocklist_path="HttpHacks/blocklist.json"):
+    def __init__(self, blocklist_path="blocklist.json"):
         super().__init__()
         self.setWindowTitle('Focus Timer App')
-        self.setGeometry(100, 100, 1100, 700)
+        self.setGeometry(100, 100, 1400, 700)
 
         # Windows 11 styling
         self.setStyleSheet("""
@@ -188,12 +189,16 @@ class MainWindow(QMainWindow):
         for site in all_sites:
             self.add_website_widget(site)
 
-        # ===== RIGHT PANEL: Timer/Clock Widget =====
+        # ===== MIDDLE PANEL: Timer/Clock Widget =====
         self.clock_widget = ClockWidget(self.manager)
 
-        # Add both panels to main layout
+        # ===== RIGHT PANEL: Tasks =====
+        self.task_panel = TaskPanel()
+
+        # Add all panels to main layout
         main_layout.addWidget(left_container, 1)
-        main_layout.addWidget(self.clock_widget, 3)
+        main_layout.addWidget(self.clock_widget, 2)
+        main_layout.addWidget(self.task_panel, 1)
 
     def add_website_widget(self, site_name):
         if site_name in self.website_widgets:
