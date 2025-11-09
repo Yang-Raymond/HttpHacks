@@ -224,10 +224,14 @@ class ClockWidget(QWidget):
         else:
             # Timer finished
             self.is_running = False
-            self.start_button.setText("Start")
+            self.start_button.setText("Focus")
             self.timer.stop()
             self.timer_stopped.emit()
             self.stop_blocking()
+            
+            # Reset total_seconds so display switches back to editable time_digits
+            self.total_seconds = 0
+            
             self.update()
 
     def mousePressEvent(self, event):
