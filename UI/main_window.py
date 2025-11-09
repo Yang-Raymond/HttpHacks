@@ -1,3 +1,7 @@
+# main_window.py
+# Main application window for Focus Dock.
+# Integrates website/app blocker, timer/clock, and task management panels into a unified UI.
+
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QFrame, QMessageBox, QDialog, QGraphicsDropShadowEffect, QLineEdit
@@ -11,27 +15,32 @@ from UI.task_panel import TaskPanel
 from UI.add_website_dialog import AddWebsiteDialog
 from UI.add_app_dialog import AddAppDialog
 
-
+# Main application window class
 class MainWindow(QMainWindow):
     def __init__(self, blocklist_path="blocklist.json"):
         super().__init__()
-        self.setWindowTitle('Focus Timer App')
+        # Set up the main window properties
+        self.setWindowTitle('Focus Dock')
         self.setGeometry(100, 100, 1400, 700)
 
-        # Windows 11 styling
+        # Apply a global stylesheet for the main window
         self.setStyleSheet("""
             QMainWindow {
                 background-color: #F3F3F3;
             }
         """)
 
+        # Initialize the blocklist manager with the given path
         self.manager = BlocklistManager(blocklist_path)
-        self.website_widgets = {}
-        self.toggle_all_widget = None
+        self.website_widgets = {}  # Dictionary to store website toggle widgets
+        self.toggle_all_widget = None  # Widget to toggle all websites/apps
 
+        # Set up the user interface
         self._setup_ui()
 
+    # Private method to set up the user interface
     def _setup_ui(self):
+        # Create the main widget and layout for the window
         main_widget = QWidget()
         main_widget.setStyleSheet("background-color: #F3F3F3;")
         main_layout = QHBoxLayout()
@@ -40,9 +49,9 @@ class MainWindow(QMainWindow):
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
 
-        # LEFT PANEL: Website Blocker 
+        # LEFT PANEL: Website Blocker
         left_container = QWidget()
-        left_container.setMaximumWidth(320)
+        left_container.setMaximumWidth(320)  # Set maximum width for the left panel
         left_container.setStyleSheet("""
             QWidget {
                 background-color: #FFFFFF;
@@ -50,19 +59,20 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Add shadow effect
+        # Add shadow effect to the left panel
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(20)
         shadow.setColor(QColor(0, 0, 0, 30))
         shadow.setOffset(0, 2)
         left_container.setGraphicsEffect(shadow)
 
+        # Create layout for the left panel
         left_container_layout = QVBoxLayout()
         left_container_layout.setContentsMargins(0, 0, 0, 0)
         left_container_layout.setSpacing(0)
         left_container.setLayout(left_container_layout)
 
-        # Header labels
+        # Header section with labels
         header_widget = QWidget()
         header_widget.setStyleSheet(
             "background-color: transparent; border-radius: 0px;")
@@ -70,6 +80,7 @@ class MainWindow(QMainWindow):
         header_layout.setContentsMargins(20, 20, 20, 16)
         header_widget.setLayout(header_layout)
 
+        # Add labels for "App Name" and "Blocked"
         app_name_label = QLabel("App Name")
         app_name_label.setStyleSheet(
             "font-weight: 600; font-size: 12px; color: #616161; font-family: 'Segoe UI';")
@@ -83,19 +94,20 @@ class MainWindow(QMainWindow):
 
         left_container_layout.addWidget(header_widget)
 
-        # Divider line
+        # Divider line below the header
         divider = QFrame()
         divider.setFrameShape(QFrame.Shape.HLine)
         divider.setStyleSheet("background-color: #E5E5E5; max-height: 1px;")
         left_container_layout.addWidget(divider)
 
-        # Search bar
+        # Search bar for filtering websites/apps
         search_widget = QWidget()
         search_widget.setStyleSheet("background-color: transparent; border-radius: 0px;")
         search_layout = QVBoxLayout()
         search_layout.setContentsMargins(16, 12, 16, 12)
         search_widget.setLayout(search_layout)
 
+        # Input field for search functionality
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search apps and websites...")
         self.search_input.setStyleSheet("""
@@ -113,12 +125,12 @@ class MainWindow(QMainWindow):
                 background-color: #FFFFFF;
             }
         """)
-        self.search_input.textChanged.connect(self.filter_websites)
+        self.search_input.textChanged.connect(self.filter_websites)  # Connect search input to filter function
         search_layout.addWidget(self.search_input)
 
         left_container_layout.addWidget(search_widget)
 
-        # Scroll area for website toggles
+        # Scroll area for displaying website toggle widgets
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet("""
@@ -144,6 +156,7 @@ class MainWindow(QMainWindow):
             }
         """)
 
+        # Container for website toggle widgets
         self.left_panel = QWidget()
         self.left_panel.setStyleSheet("background-color: transparent;")
         self.left_layout = QVBoxLayout()
@@ -154,7 +167,7 @@ class MainWindow(QMainWindow):
 
         left_container_layout.addWidget(scroll_area)
 
-        # Footer for add website
+        # Footer section with buttons to add websites/apps
         footer_widget = QWidget()
         footer_widget.setStyleSheet(
             "background-color: transparent; border-radius: 0px;")
@@ -163,6 +176,7 @@ class MainWindow(QMainWindow):
         footer_layout.setSpacing(8)
         footer_widget.setLayout(footer_layout)
 
+        # Button to add a new website
         self.add_website_button = QPushButton("Add website")
         self.add_website_button.setStyleSheet("""
             QPushButton {
@@ -184,6 +198,7 @@ class MainWindow(QMainWindow):
         """)
         self.add_website_button.clicked.connect(lambda: self.handle_add_item("website"))
 
+        # Button to add a new app
         self.add_app_button = QPushButton("Add app")
         self.add_app_button.setStyleSheet("""
             QPushButton {
@@ -209,7 +224,7 @@ class MainWindow(QMainWindow):
         footer_layout.addWidget(self.add_app_button)
         left_container_layout.addWidget(footer_widget)
 
-        # Add "Toggle All" widget first (with bold text)
+        # Add "Toggle All" widget to control all websites/apps
         self.toggle_all_widget = WebsiteToggleWidget("Toggle All")
         # Make the label bold
         self.toggle_all_widget.label.setStyleSheet("font-weight: bold; color: #212121; font-size: 14px; font-family: 'Segoe UI';")
@@ -217,7 +232,7 @@ class MainWindow(QMainWindow):
         self.toggle_all_widget.toggle.toggled.connect(self.toggle_all)
         self.left_layout.addWidget(self.toggle_all_widget)
 
-        # Populate website toggles from all sites in JSON
+        # Populate website toggles from the blocklist manager
         for site_name in self.manager.get_all_sites():
             is_blocked = self.manager.is_blocked(site_name)
             self.add_website_widget(site_name, is_blocked)
@@ -225,8 +240,7 @@ class MainWindow(QMainWindow):
         # Add stretch to push all widgets to the top
         self.left_layout.addStretch()
 
-        # Add both panels to main layout
-        # MIDDLE PANEL: Timer/Clock Widget =====
+        # MIDDLE PANEL: Timer/Clock Widget
         self.clock_widget = ClockWidget(self.manager)
 
         # Connect timer signals to enable/disable left panel
@@ -236,11 +250,12 @@ class MainWindow(QMainWindow):
         # RIGHT PANEL: Tasks
         self.task_panel = TaskPanel()
 
-        # Add all panels to main layout
+        # Add all panels to the main layout
         main_layout.addWidget(left_container, 1)
         main_layout.addWidget(self.clock_widget, 2)
         main_layout.addWidget(self.task_panel, 1)
 
+    # Method to add a website toggle widget dynamically
     def add_website_widget(self, site_name, is_blocked=False):
         if site_name in self.website_widgets:
             return
@@ -252,6 +267,7 @@ class MainWindow(QMainWindow):
         self.left_layout.addWidget(widget)
         self.website_widgets[site_name] = widget
 
+    # Method to handle adding a new website or app
     def handle_add_item(self, item_type):
         #Open dialog to add website or app
         if item_type == "website":
@@ -294,6 +310,7 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Input Error", "Please enter both app name and executable.")
 
+    # Method to update the block status of a website/app
     def update_block_status(self, site_name, blocked: bool):
         # Update toggle to reflect if site is blocked
         self.manager.set_blocked(site_name, blocked)
@@ -303,6 +320,7 @@ class MainWindow(QMainWindow):
             self.toggle_all_widget.toggle.setChecked(self.manager.are_all_blocked())
             self.toggle_all_widget.toggle.blockSignals(False)
 
+    # Method to toggle the block status of all websites/apps
     def toggle_all(self, checked: bool):
         # Block signals temporarily to avoid triggering individual updates
         for widget in self.website_widgets.values():
@@ -313,6 +331,7 @@ class MainWindow(QMainWindow):
         # Update all in the manager at once
         self.manager.set_all_blocked(checked)
 
+    # Method to enable or disable the left panel
     def set_left_panel_enabled(self, enabled: bool):
         # Enable or disable all controls in the left panel
         if self.toggle_all_widget:
@@ -325,6 +344,7 @@ class MainWindow(QMainWindow):
         self.add_app_button.setEnabled(enabled)
         self.search_input.setEnabled(enabled) 
 
+    # Method to filter websites/apps based on search input
     def filter_websites(self, search_text: str):
         # Filter website widgets based on search text
         search_text = search_text.lower().strip()

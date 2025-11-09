@@ -1,3 +1,6 @@
+# BlocklistManager module
+# Handles loading, saving, and managing the blocklist of websites and apps.
+
 import json
 from typing import Dict, List
 

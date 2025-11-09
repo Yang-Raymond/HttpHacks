@@ -1,3 +1,6 @@
+# AddWebsiteDialog module
+# Provides a dialog for adding new websites to the blocklist.
+
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit
 from PyQt6.QtCore import Qt
 

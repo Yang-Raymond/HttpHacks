@@ -1,3 +1,6 @@
+# ClockWidget module
+# Displays a timer or clock for focus sessions in the UI.
+
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QSizePolicy, QDialog, QGraphicsDropShadowEffect
 from PyQt6.QtCore import Qt, QTimer, QRect, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPen, QFont

@@ -1,3 +1,6 @@
+# TaskPanel module
+# Displays and manages the list of tasks in the UI.
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QScrollArea, QFrame, QGraphicsDropShadowEffect
