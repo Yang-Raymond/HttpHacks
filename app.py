@@ -1,16 +1,130 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpacerItem, QSizePolicy, QMainWindow, QDialog
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QSpacerItem, QSizePolicy, QMainWindow, QDialog, QFrame, QLineEdit, 
+    QMessageBox, QScrollArea, QCheckBox
+)
 from PyQt6.QtCore import Qt, QTimer, QRect
 from PyQt6.QtGui import QFont, QPainter, QColor, QPen, QKeyEvent, QWheelEvent
+from blocklist_manager import BlocklistManager
+import subprocess, sys, threading
+import json
 
+
+# ============================================================================
+# WebsiteToggleWidget (from website_toggle.py)
+# ============================================================================
+
+class WebsiteToggleWidget(QWidget):
+    """Widget for toggling website blocking status"""
+    def __init__(self, website_name: str):
+        super().__init__()
+        self.website_name = website_name
+        layout = QHBoxLayout()
+        self.label = QLabel(website_name)
+        self.toggle = QCheckBox("Block")
+        layout.addWidget(self.label)
+        layout.addWidget(self.toggle)
+        self.setLayout(layout)
+
+    def is_blocked(self) -> bool:
+        return self.toggle.isChecked()
+
+    def get_website(self) -> str:
+        return self.website_name
+
+
+# ============================================================================
+# Combined MainWindow with Website Blocker + Timer
+# ============================================================================
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, blocklist_path="HttpHacks/blocklist.json"):
         super().__init__()
-        self.setWindowTitle('App name')
+        self.setWindowTitle('Focus Timer App')
+        self.setGeometry(100, 100, 1000, 600)
 
-        # Create and set the ClockWidget as the central widget
-        self.clock_widget = ClockWidget()
-        self.setCentralWidget(self.clock_widget)
+        self.manager = BlocklistManager(blocklist_path)
+        self.website_widgets = {}
+
+        self._setup_ui()
+
+    def _setup_ui(self):
+        main_widget = QWidget()
+        main_layout = QHBoxLayout()
+        main_widget.setLayout(main_layout)
+        self.setCentralWidget(main_widget)
+
+        # ===== LEFT PANEL: Website Blocker =====
+        left_container = QWidget()
+        left_container.setMaximumWidth(300)
+        left_container_layout = QVBoxLayout()
+        left_container.setLayout(left_container_layout)
+
+        # Scroll area for website toggles
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        self.left_panel = QWidget()
+        self.left_layout = QVBoxLayout()
+        self.left_panel.setLayout(self.left_layout)
+        scroll_area.setWidget(self.left_panel)
+
+        left_container_layout.addWidget(scroll_area)
+
+        # Footer for add website
+        footer_widget = QWidget()
+        footer_layout = QVBoxLayout()
+        footer_widget.setLayout(footer_layout)
+        self.input_field = QLineEdit()
+        self.input_field.setPlaceholderText("Enter website...")
+        self.add_button = QPushButton("Add app")
+        self.add_button.clicked.connect(self.handle_add_website)
+        footer_layout.addWidget(self.input_field)
+        footer_layout.addWidget(self.add_button)
+        left_container_layout.addWidget(footer_widget)
+
+        # Populate website toggles from blocked and unblocked
+        all_sites = set()
+        for site_list in self.manager.blocked.values():
+            all_sites.update(site_list)
+        for site_list in self.manager.unblocked.values():
+            all_sites.update(site_list)
+
+        for site in all_sites:
+            self.add_website_widget(site)
+
+        # ===== RIGHT PANEL: Timer/Clock Widget =====
+        self.clock_widget = ClockWidget(self.manager)
+        
+        # Add both panels to main layout
+        main_layout.addWidget(left_container, 1)
+        main_layout.addWidget(self.clock_widget, 3)
+
+    def add_website_widget(self, site_name):
+        if site_name in self.website_widgets:
+            return
+        widget = WebsiteToggleWidget(site_name)
+        widget.toggle.stateChanged.connect(
+            lambda _: self.update_block_status(site_name, widget.is_blocked())
+        )
+        self.left_layout.addWidget(widget)
+        self.website_widgets[site_name] = widget
+
+    def handle_add_website(self):
+        site = self.input_field.text().strip()
+        if site:
+            if site in self.website_widgets:
+                QMessageBox.warning(self, "Exists", f"{site} already exists.")
+                return
+            self.manager.all_sites[site] = [site]
+            self.manager.unblocked[site] = [site]
+            self.manager.blocked[site] = []
+            self.add_website_widget(site)
+            self.input_field.clear()
+        else:
+            QMessageBox.warning(self, "Input Error", "Please enter a website name.")
+
+    def update_block_status(self, site_name, blocked: bool):
+        self.manager.set_blocked(site_name, blocked)
 
 
 class ScrollNumberWidget(QWidget):
@@ -243,9 +357,12 @@ class TimeEditDialog(QDialog):
 
 
 class ClockWidget(QWidget):
-    def __init__(self):
+    def __init__(self, manager=None):
         super().__init__()
         self.setWindowTitle('Clock Widget')
+        
+        # Reference to blocklist manager
+        self.manager = manager
         
         # Timer variables
         self.total_seconds = 0
@@ -314,6 +431,10 @@ class ClockWidget(QWidget):
                 self.is_running = True
                 self.start_button.setText("Stop")
                 self.timer.start(1000)  # Update every second
+                
+                # Start blocking websites when timer starts
+                if self.manager:
+                    self.start_blocking()
         else:
             # Stop the timer
             self.is_running = False
@@ -336,6 +457,21 @@ class ClockWidget(QWidget):
             self.total_seconds = 0
             
         self.update()
+    
+    def start_blocking(self):
+        """Start blocking selected websites"""
+        urls = self.manager.get_blocked_urls()
+        if not urls:
+            return
+        
+        temp_file = "temp_blocklist.json"
+        with open(temp_file, "w", encoding="utf-8") as f:
+            json.dump({"blocked": urls}, f, indent=2)
+
+        def run_blocker():
+            subprocess.run([sys.executable, "mvp_blocker.py", "--blocklist", temp_file, "--enable-pac"])
+
+        threading.Thread(target=run_blocker, daemon=True).start()
         
     def update_countdown(self):
         if self.remaining_seconds > 0:
