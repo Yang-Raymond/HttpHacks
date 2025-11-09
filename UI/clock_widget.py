@@ -26,6 +26,7 @@ class ClockWidget(QWidget):
 
         # Time values
         self.time_digits = [0, 0, 0, 0, 0, 0]
+        self.original_time_digits = [0, 0, 0, 0, 0, 0]  # Store original input
 
         # Setup UI
         self.setup_ui()
@@ -50,7 +51,7 @@ class ClockWidget(QWidget):
             20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Start/Stop button
-        self.start_button = QPushButton("Start")
+        self.start_button = QPushButton("Focus")
         self.start_button.setMinimumSize(140, 52)
         self.start_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start_button.setStyleSheet("""
@@ -98,6 +99,9 @@ class ClockWidget(QWidget):
             self.total_seconds = hours * 3600 + minutes * 60 + seconds
 
             if self.total_seconds > 0:
+                # Store the original time
+                self.original_time_digits = self.time_digits.copy()
+                
                 self.remaining_seconds = self.total_seconds
                 self.is_running = True
                 self.start_button.setText("Stop")
@@ -107,22 +111,13 @@ class ClockWidget(QWidget):
                 if self.manager:
                     self.start_blocking()
         else:
-            # Stop the timer
+            # Stop the timer and reset to original input
             self.is_running = False
-            self.start_button.setText("Start")
+            self.start_button.setText("Focus")
             self.timer.stop()
 
-            # Reset to the remaining time for editing
-            hours = self.remaining_seconds // 3600
-            minutes = (self.remaining_seconds % 3600) // 60
-            seconds = self.remaining_seconds % 60
-
-            self.time_digits[0] = hours // 10
-            self.time_digits[1] = hours % 10
-            self.time_digits[2] = minutes // 10
-            self.time_digits[3] = minutes % 10
-            self.time_digits[4] = seconds // 10
-            self.time_digits[5] = seconds % 10
+            # Reset to the original time input
+            self.time_digits = self.original_time_digits.copy()
 
             # Reset total_seconds so the progress arc clears
             self.total_seconds = 0
@@ -188,6 +183,9 @@ class ClockWidget(QWidget):
             self.time_digits[3] = minutes % 10
             self.time_digits[4] = seconds // 10
             self.time_digits[5] = seconds % 10
+            
+            # Update original time digits as well
+            self.original_time_digits = self.time_digits.copy()
 
             self.update()
 
