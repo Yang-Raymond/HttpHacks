@@ -72,6 +72,10 @@ class TaskWidget(QWidget):
         self.task_data['completed'] = (state == Qt.CheckState.Checked.value)
         self.update_strike_through()
         self.task_changed.emit()
+        
+        # Delete task when completed
+        if self.task_data['completed']:
+            self.task_deleted.emit(self)
     
     def update_strike_through(self):
         if self.task_data.get('completed', False):
