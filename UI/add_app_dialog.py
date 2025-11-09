@@ -78,7 +78,7 @@ class AddAppDialog(QDialog):
         layout.addWidget(exe_label)
         
         self.exe_input = QLineEdit()
-        self.exe_input.setPlaceholderText("e.g., chrome.exe")
+        self.exe_input.setPlaceholderText("e.g., chrome")
         self.exe_input.setStyleSheet("""
             QLineEdit {
                 background-color: #F9F9F9;

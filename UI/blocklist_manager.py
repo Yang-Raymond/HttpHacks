@@ -47,13 +47,36 @@ class BlocklistManager:
         }
         self.save_blocklist()
 
-    def add_website(self, name: str, url: str):
-        # Add a new website entry
-        self.add_entry(name, urls=[url], apps="")
+    def add_website(self, name: str, urls_input: str):
+        # Parse comma-separated URLs
+        url_list = [url.strip() for url in urls_input.split(',') if url.strip()]
+        
+        # Check if website name already exists
+        if name in self.data.get("websites", {}):
+            # Entry exists - add only new URLs that don't already exist
+            existing_urls = set(self.data["websites"][name].get("urls", []))
+            new_urls = [url for url in url_list if url not in existing_urls]
+            
+            if new_urls:
+                # Add the new URLs to existing list
+                self.data["websites"][name]["urls"].extend(new_urls)
+                self.save_blocklist()
+        else:
+            # No matching entry exists, create new one with all URLs
+            self.add_entry(name, urls=url_list, apps="")
 
     def add_app(self, name: str, exe_pattern: str):
-        # Add a new app entry
-        self.add_entry(name, urls=[], apps=exe_pattern)
+        # Ensure pattern has asterisk at the end
+        if not exe_pattern.endswith("*"):
+            exe_pattern = exe_pattern + "*"
+        
+        # Check if an entry with this name already exists
+        if name in self.data.get("websites", {}):
+            self.data["websites"][name]["apps"] = exe_pattern
+            self.save_blocklist()
+        else:
+            # No matching entry exists, create new one
+            self.add_entry(name, urls=[], apps=exe_pattern)
 
     def get_blocked_urls(self) -> List[str]:
         # Return all URLs from blocked entries

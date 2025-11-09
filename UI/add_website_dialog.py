@@ -78,7 +78,7 @@ class AddWebsiteDialog(QDialog):
         layout.addWidget(url_label)
         
         self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText("e.g., facebook.com")
+        self.url_input.setPlaceholderText("e.g., facebook.com, *.facebook.com, fb.com")
         self.url_input.setStyleSheet("""
             QLineEdit {
                 background-color: #F9F9F9;
