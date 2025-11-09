@@ -12,7 +12,7 @@ from UI.add_app_dialog import AddAppDialog
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, blocklist_path="HttpHacks/blocklist.json"):
+    def __init__(self, blocklist_path="blocklist.json"):
         super().__init__()
         self.setWindowTitle('Focus Timer App')
         self.setGeometry(100, 100, 1100, 700)
