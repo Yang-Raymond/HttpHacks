@@ -1,14 +1,14 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QSizePolicy, QDialog, QGraphicsDropShadowEffect
-from PyQt6.QtCore import Qt, QTimer, QRect
+from PyQt6.QtCore import Qt, QTimer, QRect, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPen, QFont
 from UI.time_edit_dialog import TimeEditDialog
 import subprocess
 import sys
-import threading
-import json
-
 
 class ClockWidget(QWidget):
+    timer_started = pyqtSignal()  # Emitted when timer starts
+    timer_stopped = pyqtSignal()  # Emitted when timer stops
+
     def __init__(self, manager=None):
         super().__init__()
         self.setWindowTitle('Clock Widget')
@@ -26,6 +26,10 @@ class ClockWidget(QWidget):
 
         # Time values
         self.time_digits = [0, 0, 0, 0, 0, 0]
+        self.original_time_digits = [0, 0, 0, 0, 0, 0]  # Store original input
+
+        # Blocker process
+        self.blocker_process = None
 
         # Setup UI
         self.setup_ui()
@@ -50,7 +54,7 @@ class ClockWidget(QWidget):
             20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Start/Stop button
-        self.start_button = QPushButton("Start")
+        self.start_button = QPushButton("Focus")
         self.start_button.setMinimumSize(140, 52)
         self.start_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start_button.setStyleSheet("""
@@ -98,19 +102,29 @@ class ClockWidget(QWidget):
             self.total_seconds = hours * 3600 + minutes * 60 + seconds
 
             if self.total_seconds > 0:
+                # Store the original time
+                self.original_time_digits = self.time_digits.copy()
+                
                 self.remaining_seconds = self.total_seconds
                 self.is_running = True
                 self.start_button.setText("Stop")
                 self.timer.start(1000)  # Update every second
 
+                self.timer_started.emit()
+
                 # Start blocking websites when timer starts
                 if self.manager:
                     self.start_blocking()
         else:
-            # Stop the timer
+            # Stop the timer and reset to original input
             self.is_running = False
-            self.start_button.setText("Start")
+            self.start_button.setText("Focus")
             self.timer.stop()
+
+            self.timer_stopped.emit()
+            
+            # Stop the blocker script 
+            self.stop_blocking()
 
             # Reset to the remaining time for editing
             hours = self.remaining_seconds // 3600
@@ -123,6 +137,8 @@ class ClockWidget(QWidget):
             self.time_digits[3] = minutes % 10
             self.time_digits[4] = seconds // 10
             self.time_digits[5] = seconds % 10
+            # Reset to the original time input
+            self.time_digits = self.original_time_digits.copy()
 
             # Reset total_seconds so the progress arc clears
             self.total_seconds = 0
@@ -130,20 +146,76 @@ class ClockWidget(QWidget):
         self.update()
 
     def start_blocking(self):
-        """Start blocking selected websites"""
-        urls = self.manager.get_blocked_urls()
-        if not urls:
+        #Start blocking selected websites
+        # If already running, don't start again
+        if self.blocker_process and self.blocker_process.poll() is None:
             return
+        
+        try:
+            # Use CREATE_NEW_PROCESS_GROUP to isolate the subprocess
+            if sys.platform == "win32":
+                import subprocess
+                self.blocker_process = subprocess.Popen(
+                    [
+                        sys.executable,
+                        "mvp_blocker.py",
+                        "--blocklist", "blocklist.json",
+                        "--enable-pac",
+                        "--app-mode", "strict",
+                        "--app-scan", "1.0"
+                    ],
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                )
+        
+            print("[INFO] Blocker script started")
+        except Exception as e:
+            print(f"[ERROR] Failed to start blocker: {e}")
+            self.blocker_process = None
 
-        temp_file = "temp_blocklist.json"
-        with open(temp_file, "w", encoding="utf-8") as f:
-            json.dump({"blocked": urls}, f, indent=2)
-
-        def run_blocker():
-            subprocess.run([sys.executable, "mvp_blocker.py",
-                           "--blocklist", temp_file, "--enable-pac"])
-
-        threading.Thread(target=run_blocker, daemon=True).start()
+    def stop_blocking(self):
+        # Stop the blocking script
+        if self.blocker_process is None:
+            return
+        
+        try:
+            # First, clear PAC by running the script with --disable-pac-only
+            if sys.platform == "win32":
+                subprocess.run([
+                    sys.executable,
+                    "mvp_blocker.py",
+                    "--disable-pac-only"
+                ], timeout=3)
+                print("[INFO] PAC configuration cleared")
+            
+            # Check if process is still running
+            if self.blocker_process.poll() is None:
+                if sys.platform == "win32":
+                    import os
+                    # Graceful termination without /F flag
+                    try:
+                        os.system(f'taskkill /PID {self.blocker_process.pid} > nul 2>&1')
+                        print("[INFO] Sent graceful stop signal to blocker script")
+                    except Exception as e:
+                        print(f"[WARN] Could not send stop signal: {e}")
+                        self.blocker_process.terminate()
+                
+                # Wait longer for cleanup to complete (PAC cleanup takes time)
+                try:
+                    self.blocker_process.wait(timeout=3)
+                    print("[INFO] Blocker script stopped with cleanup")
+                except subprocess.TimeoutExpired:
+                    # If it STILL doesn't stop after 3 seconds, force kill
+                    if sys.platform == "win32":
+                        import os
+                        os.system(f'taskkill /F /PID {self.blocker_process.pid} > nul 2>&1')
+                    else:
+                        self.blocker_process.kill()
+                    self.blocker_process.wait()
+                    print("[WARN] Blocker script force killed (cleanup may be incomplete)")
+        except Exception as e:
+            print(f"[WARN] Error stopping blocker: {e}")
+        finally:
+            self.blocker_process = None
 
     def update_countdown(self):
         if self.remaining_seconds > 0:
@@ -154,6 +226,8 @@ class ClockWidget(QWidget):
             self.is_running = False
             self.start_button.setText("Start")
             self.timer.stop()
+            self.timer_stopped.emit()
+            self.stop_blocking()
             self.update()
 
     def mousePressEvent(self, event):
@@ -188,6 +262,9 @@ class ClockWidget(QWidget):
             self.time_digits[3] = minutes % 10
             self.time_digits[4] = seconds // 10
             self.time_digits[5] = seconds % 10
+            
+            # Update original time digits as well
+            self.original_time_digits = self.time_digits.copy()
 
             self.update()
 

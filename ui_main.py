@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QLineEdit, QPushButton, QMessageBox, QScrollArea
 )
 from website_toggle import WebsiteToggleWidget
-from blocklist_manager import BlocklistManager
+from UI.blocklist_manager import BlocklistManager
 import subprocess, sys, threading
 import json
 

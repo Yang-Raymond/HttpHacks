@@ -394,11 +394,31 @@ def set_user_pac(url: str):
         key = r"Software\Microsoft\Windows\CurrentVersion\Internet Settings"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key, 0, winreg.KEY_SET_VALUE) as k:
             winreg.SetValueEx(k, "AutoConfigURL", 0, winreg.REG_SZ, url)
+            # Force enable proxy auto-detect
+            winreg.SetValueEx(k, "ProxyEnable", 0, winreg.REG_DWORD, 0)
+        
         INTERNET_OPTION_SETTINGS_CHANGED = 39
         INTERNET_OPTION_REFRESH = 37
+        INTERNET_OPTION_PROXY = 38
+        
+        # Notify all applications multiple times to ensure they pick it up
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
         ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0)
+        ctypes.windll.Wininet.InternetSetOptionW(0, INTERNET_OPTION_PROXY, 0, 0)
+        
+        # Broadcast WM_SETTINGCHANGE to force all applications to reload
+        HWND_BROADCAST = 0xFFFF
+        WM_SETTINGCHANGE = 0x001A
+        SMTO_ABORTIFHUNG = 0x0002
+        ctypes.windll.user32.SendNotifyMessageW(
+            HWND_BROADCAST, 
+            WM_SETTINGCHANGE, 
+            0, 
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"
+        )
+        
         print(f"[OK] Enabled per-user PAC: {url}")
+        print(f"[INFO] Browsers may need to close active connections")
         _pac_enabled = True
     except Exception as e:
         print(f"[WARN] Could not set PAC automatically: {e}")
@@ -422,7 +442,7 @@ def clear_user_pac():
         print(f"[WARN] Could not clear PAC automatically: {e}")
 
 # ---------- Config Loading ----------
-def load_config(blocklist_path, apps_path):
+def load_config(blocklist_path):
     # Load domain blocklist
     if not blocklist_path or not os.path.exists(blocklist_path):
         raise FileNotFoundError(f"Blocklist file not found: {blocklist_path}")
@@ -432,30 +452,30 @@ def load_config(blocklist_path, apps_path):
 
     blocked_domains = []
     unblocked_domains = []
+    blocked_apps = []
+    unblocked_apps = []
 
-    # Flatten blocked lists
-    for group in data.get("blocked", {}).values():
-        blocked_domains.extend(group)
+    websites = data.get("websites", {})
+    for name, info in websites.items():
+        blocked_flag = info.get("blocked", False)
+        urls = info.get("urls", [])
+        app_pattern = info.get("apps", "").strip()
 
-    # Flatten unblocked lists
-    for group in data.get("unblocked", {}).values():
-        unblocked_domains.extend(group)
+        if blocked_flag:
+            blocked_domains.extend(urls)
+            if app_pattern:
+                blocked_apps.append(app_pattern)
+        else:
+            unblocked_domains.extend(urls)
+            if app_pattern:
+                unblocked_apps.append(app_pattern)
 
-    # Load app patterns
-    apps = []
-    if apps_path and os.path.exists(apps_path):
-        with open(apps_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        apps = data.get("apps", [])
-    else:
-        apps = ["discord*", "steam*"]
-
-    return blocked_domains, unblocked_domains, apps
+    return blocked_domains, unblocked_domains, blocked_apps, unblocked_apps
 
 # ---------- Main ----------
 async def main_async(args):
-    blocked, unblocked, app_patterns = load_config(args.blocklist, args.apps)
-    matcher = DomainMatcher(blocked, unblocked)
+    blocked_domains, unblocked_domains, blocked_apps, unblocked_apps = load_config(args.blocklist)
+    matcher = DomainMatcher(blocked_domains, unblocked_domains)
     logger = Logger(args.log)
 
     # PAC server
@@ -474,6 +494,7 @@ async def main_async(args):
     tasks = [http.run(), socks.run()]
     
     # App Blocker
+    app_patterns = blocked_apps
     if psutil and app_patterns:
         app_blocker = AppBlocker(
             patterns=app_patterns,
@@ -501,6 +522,7 @@ def main():
     p.add_argument("--pac-port",   type=int, default=18080)
     p.add_argument("--enable-pac", action="store_true")
     p.add_argument("--disable-pac", action="store_true")
+    p.add_argument("--disable-pac-only", action="store_true")
     p.add_argument("--blocklist",  type=str, default="blocklist.json")
     p.add_argument("--apps",       type=str, default="apps.json")
     p.add_argument("--log",        type=str, default=os.path.join("logs","traffic.log"))
@@ -509,6 +531,11 @@ def main():
     p.add_argument("--app-scan",   type=float, default=2.0)
     p.add_argument("--app-dry-run", action="store_true")
     args = p.parse_args()
+
+    if args.disable_pac_only:
+        clear_user_pac()
+        print("[INFO] PAC disabled, exiting")
+        return  # Exit immediately
     
     try:
         asyncio.run(main_async(args))

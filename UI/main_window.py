@@ -4,18 +4,19 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-from blocklist_manager import BlocklistManager
+from UI.blocklist_manager import BlocklistManager
 from UI.website_toggle_widget import WebsiteToggleWidget
 from UI.clock_widget import ClockWidget
+from UI.task_panel import TaskPanel
 from UI.add_website_dialog import AddWebsiteDialog
 from UI.add_app_dialog import AddAppDialog
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, blocklist_path="HttpHacks/blocklist.json"):
+    def __init__(self, blocklist_path="blocklist.json"):
         super().__init__()
         self.setWindowTitle('Focus Timer App')
-        self.setGeometry(100, 100, 1100, 700)
+        self.setGeometry(100, 100, 1400, 700)
 
         # Windows 11 styling
         self.setStyleSheet("""
@@ -26,6 +27,7 @@ class MainWindow(QMainWindow):
 
         self.manager = BlocklistManager(blocklist_path)
         self.website_widgets = {}
+        self.toggle_all_widget = None
 
         self._setup_ui()
 
@@ -38,7 +40,7 @@ class MainWindow(QMainWindow):
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
 
-        # ===== LEFT PANEL: Website Blocker =====
+        # LEFT PANEL: Website Blocker 
         left_container = QWidget()
         left_container.setMaximumWidth(320)
         left_container.setStyleSheet("""
@@ -178,27 +180,40 @@ class MainWindow(QMainWindow):
         footer_layout.addWidget(self.add_app_button)
         left_container_layout.addWidget(footer_widget)
 
-        # Populate website toggles from blocked and unblocked
-        all_sites = set()
-        for site_list in self.manager.blocked.values():
-            all_sites.update(site_list)
-        for site_list in self.manager.unblocked.values():
-            all_sites.update(site_list)
+        # Add "Toggle All" widget first (with bold text)
+        self.toggle_all_widget = WebsiteToggleWidget("Toggle All")
+        # Make the label bold
+        self.toggle_all_widget.label.setStyleSheet("font-weight: bold; color: #212121; font-size: 14px; font-family: 'Segoe UI';")
+        self.toggle_all_widget.toggle.setChecked(self.manager.are_all_blocked())
+        self.toggle_all_widget.toggle.toggled.connect(self.toggle_all)
+        self.left_layout.addWidget(self.toggle_all_widget)
 
-        for site in all_sites:
-            self.add_website_widget(site)
-
-        # ===== RIGHT PANEL: Timer/Clock Widget =====
-        self.clock_widget = ClockWidget(self.manager)
+        # Populate website toggles from all sites in JSON
+        for site_name in self.manager.get_all_sites():
+            is_blocked = self.manager.is_blocked(site_name)
+            self.add_website_widget(site_name, is_blocked)
 
         # Add both panels to main layout
-        main_layout.addWidget(left_container, 1)
-        main_layout.addWidget(self.clock_widget, 3)
+        # MIDDLE PANEL: Timer/Clock Widget =====
+        self.clock_widget = ClockWidget(self.manager)
 
-    def add_website_widget(self, site_name):
+        # Connect timer signals to enable/disable left panel
+        self.clock_widget.timer_started.connect(lambda: self.set_left_panel_enabled(False))
+        self.clock_widget.timer_stopped.connect(lambda: self.set_left_panel_enabled(True))
+
+        # RIGHT PANEL: Tasks
+        self.task_panel = TaskPanel()
+
+        # Add all panels to main layout
+        main_layout.addWidget(left_container, 1)
+        main_layout.addWidget(self.clock_widget, 2)
+        main_layout.addWidget(self.task_panel, 1)
+
+    def add_website_widget(self, site_name, is_blocked=False):
         if site_name in self.website_widgets:
             return
         widget = WebsiteToggleWidget(site_name)
+        widget.toggle.setChecked(is_blocked)  # Set initial state
         widget.toggle.toggled.connect(
             lambda checked: self.update_block_status(site_name, checked)
         )
@@ -206,21 +221,24 @@ class MainWindow(QMainWindow):
         self.website_widgets[site_name] = widget
 
     def handle_add_item(self, item_type):
-        """Open dialog to add website or app"""
+        #Open dialog to add website or app
         if item_type == "website":
             dialog = AddWebsiteDialog(self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 name, url = dialog.get_values()
                 
                 if name and url:
-                    if name in self.website_widgets:
-                        QMessageBox.warning(self, "Exists", f"{name} already exists.")
-                        return
-                    
-                    self.manager.all_sites[name] = [url]
-                    self.manager.unblocked[name] = [url]
-                    self.manager.blocked[name] = []
-                    self.add_website_widget(name)
+                    # Check if it's a completely new entry
+                    is_new_entry = name not in self.manager.get_all_sites()
+
+                    self.manager.add_website(name, url)
+
+                    # Only add widget if it's a brand new entry
+                    if is_new_entry:
+                        self.add_website_widget(name, False)
+                        QMessageBox.information(self, "Success", f"{name} has been added!")
+                    else:
+                        QMessageBox.information(self, "Updated", f"URLs added to existing {name}.")
                 else:
                     QMessageBox.warning(self, "Input Error", "Please enter both website name and URL.")
         
@@ -229,17 +247,47 @@ class MainWindow(QMainWindow):
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 name, exe = dialog.get_values()
                 
-                if name and exe:
-                    if name in self.website_widgets:
-                        QMessageBox.warning(self, "Exists", f"{name} already exists.")
-                        return
-                    
-                    self.manager.all_sites[name] = [exe]
-                    self.manager.unblocked[name] = [exe]
-                    self.manager.blocked[name] = []
-                    self.add_website_widget(name)
+            if name and exe:
+                # Check if it's a completely new entry
+                is_new_entry = name not in self.manager.get_all_sites()
+                
+                self.manager.add_app(name, exe)
+                
+                # Only add widget if it's a brand new entry
+                if is_new_entry:
+                    self.add_website_widget(name, False)
+                    QMessageBox.information(self, "Success", f"{name} has been added!")
                 else:
-                    QMessageBox.warning(self, "Input Error", "Please enter both app name and executable.")
+                    QMessageBox.information(self, "Updated", f"App executable added to existing {name}.")
+            else:
+                QMessageBox.warning(self, "Input Error", "Please enter both app name and executable.")
 
     def update_block_status(self, site_name, blocked: bool):
+        # Update toggle to reflect if site is blocked
         self.manager.set_blocked(site_name, blocked)
+
+        if self.toggle_all_widget:
+            self.toggle_all_widget.toggle.blockSignals(True)
+            self.toggle_all_widget.toggle.setChecked(self.manager.are_all_blocked())
+            self.toggle_all_widget.toggle.blockSignals(False)
+
+    def toggle_all(self, checked: bool):
+        # Block signals temporarily to avoid triggering individual updates
+        for widget in self.website_widgets.values():
+            widget.toggle.blockSignals(True)
+            widget.toggle.setChecked(checked)
+            widget.toggle.blockSignals(False)
+        
+        # Update all in the manager at once
+        self.manager.set_all_blocked(checked)
+
+    def set_left_panel_enabled(self, enabled: bool):
+        # Enable or disable all controls in the left panel
+        if self.toggle_all_widget:
+            self.toggle_all_widget.toggle.setEnabled(enabled)
+        
+        for widget in self.website_widgets.values():
+            widget.toggle.setEnabled(enabled)
+        
+        self.add_website_button.setEnabled(enabled)
+        self.add_app_button.setEnabled(enabled)

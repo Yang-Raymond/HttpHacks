@@ -1,327 +1,438 @@
 {
-  "blocked": {
-    "Facebook & Meta": [
-      "*.facebook.com",
-      "facebook.com",
-      "*.fbcdn.net",
-      "*.messenger.com",
-      "messenger.com",
-      "*.instagram.com",
-      "instagram.com",
-      "*.cdninstagram.com",
-      "*.threads.net",
-      "threads.net",
-      "*.whatsapp.com",
-      "whatsapp.com",
-      "*.whatsapp.net"
-    ],
-
-    "TikTok": [
-      "*.tiktok.com",
-      "tiktok.com",
-      "*.tiktokv.com",
-      "*.tiktokcdn.com",
-      "*.tiktokcdn-us.com",
-      "*.tik-tokcdn.com",
-      "*.musical.ly",
-      "musical.ly",
-      "*.byteoversea.com"
-    ],
-
-    "Reddit": [
-      "*.reddit.com",
-      "reddit.com",
-      "www.reddit.com",
-      "*.redd.it",
-      "*.redditmedia.com",
-      "*.redditstatic.com"
-    ],
-
-    "Twitter / X": [
-      "x.com",
-      "*.x.com",
-      "twitter.com",
-      "*.twitter.com",
-      "t.co",
-      "*.t.co",
-      "*.twimg.com",
-      "syndication.twitter.com"
-    ],
-
-    "Snapchat": [
-      "*.snapchat.com",
-      "snapchat.com",
-      "*.sc-cdn.net",
-      "*.snapkit.com",
-      "*.snapchatcdn.com"
-    ],
-
-    "Discord": [
-      "discord.com",
-      "*.discord.com",
-      "discord.gg",
-      "*.discord.gg",
-      "discordapp.com",
-      "*.discordapp.com",
-      "cdn.discordapp.com",
-      "media.discordapp.net",
-      "status.discordapp.com"
-    ],
-
-    "Twitch": [
-      "twitch.tv",
-      "*.twitch.tv",
-      "ttvnw.net",
-      "*.ttvnw.net",
-      "jtvnw.net",
-      "*.jtvnw.net"
-    ],
-
-    "Netflix": [
-      "netflix.com",
-      "*.netflix.com",
-      "nflximg.net",
-      "*.nflximg.net",
-      "nflxvideo.net",
-      "*.nflxvideo.net",
-      "nflxso.net",
-      "*.nflxso.net",
-      "nflxext.com",
-      "*.nflxext.com"
-    ],
-
-    "Prime Video": [
-      "primevideo.com",
-      "*.primevideo.com",
-      "amazonvideo.com",
-      "*.amazonvideo.com",
-      "media-amazon.com",
-      "*.media-amazon.com"
-    ],
-
-    "Hulu": [
-      "hulu.com",
-      "*.hulu.com",
-      "huluim.com",
-      "*.huluim.com"
-    ],
-
-    "Disney+": [
-      "disneyplus.com",
-      "*.disneyplus.com",
-      "bamgrid.com",
-      "*.bamgrid.com",
-      "dssott.com",
-      "*.dssott.com",
-      "hotstar.com",
-      "*.hotstar.com"
-    ],
-
-    "Max (HBO)": [
-      "max.com",
-      "*.max.com",
-      "hbomax.com",
-      "*.hbomax.com"
-    ],
-
-    "Crunchyroll / VRV": [
-      "crunchyroll.com",
-      "*.crunchyroll.com",
-      "vrv.co",
-      "*.vrv.co"
-    ],
-
-    "Apple Music / iTunes": [
-      "music.apple.com",
-      "*.music.apple.com",
-      "itunes.apple.com",
-      "*.itunes.apple.com",
-      "mzstatic.com",
-      "*.mzstatic.com"
-    ],
-
-    "SoundCloud": [
-      "soundcloud.com",
-      "*.soundcloud.com"
-    ],
-
-    "Steam": [
-      "steamcommunity.com",
-      "*.steamcommunity.com",
-      "steampowered.com",
-      "*.steampowered.com",
-      "steamstatic.com",
-      "*.steamstatic.com",
-      "steamcontent.com",
-      "*.steamcontent.com",
-      "steamusercontent.com",
-      "*.steamusercontent.com",
-      "steamgames.com",
-      "*.steamgames.com",
-      "s.team",
-      "*.s.team"
-    ],
-
-    "Epic Games / Fortnite": [
-      "epicgames.com",
-      "*.epicgames.com",
-      "fortnite.com",
-      "*.fortnite.com"
-    ],
-
-    "Riot Games": [
-      "*.riotgames.com",
-      "auth.riotgames.com",
-      "signin.riotgames.com",
-      "entitlements.auth.riotgames.com",
-      "playerpreferences.riotgames.com",
-      "store.riotgames.com",
-      "rso.auth.riotgames.com",
-      "rso.si.riotgames.com",
-      "rso.play.riotgames.com",
-      "*.leagueoflegends.com",
-      "status.leagueoflegends.com",
-      "lq.na1.lol.riotgames.com",
-      "lq.eu1.lol.riotgames.com",
-      "glz-na1-1.na1.a.pvp.net",
-      "glz-eu1-1.eu1.a.pvp.net",
-      "*.pvp.net",
-      "*.riotcdn.net",
-      "lolstatic-a.akamaihd.net",
-      "*.hwcdn.net",
-      "*.akamaized.net",
-      "*.akmhd.net",
-      "*.cloudfront.net",
-      "s3.amazonaws.com"
-    ],
-
-    "Blizzard / Battle.net": [
-      "battle.net",
-      "*.battle.net",
-      "blizzard.com",
-      "*.blizzard.com",
-      "blzstatic.com",
-      "*.blzstatic.com"
-    ],
-
-    "EA / Origin": [
-      "ea.com",
-      "*.ea.com",
-      "origin.com",
-      "*.origin.com"
-    ],
-
-    "Ubisoft": [
-      "ubisoft.com",
-      "*.ubisoft.com",
-      "ubisoftconnect.com",
-      "*.ubisoftconnect.com",
-      "uplay.com",
-      "*.uplay.com"
-    ],
-
-    "Rockstar Games": [
-      "rockstargames.com",
-      "*.rockstargames.com",
-      "socialclub.rockstargames.com"
-    ],
-
-    "GOG": [
-      "gog.com",
-      "*.gog.com",
-      "gog-statics.com",
-      "*.gog-statics.com"
-    ],
-
-    "Xbox": [
-      "xbox.com",
-      "*.xbox.com",
-      "xboxlive.com",
-      "*.xboxlive.com",
-      "xboxservices.com",
-      "*.xboxservices.com"
-    ],
-
-    "PlayStation": [
-      "playstation.com",
-      "*.playstation.com",
-      "sonyentertainmentnetwork.com",
-      "*.sonyentertainmentnetwork.com"
-    ],
-
-    "Telegram": [
-      "telegram.org",
-      "*.telegram.org",
-      "t.me",
-      "*.t.me",
-      "telegram.me",
-      "*.telegram.me",
-      "telegram-cdn.org",
-      "*.telegram-cdn.org"
-    ],
-
-    "Pinterest": [
-      "pinterest.com",
-      "*.pinterest.com",
-      "pinimg.com",
-      "*.pinimg.com"
-    ],
-
-    "Tumblr": [
-      "tumblr.com",
-      "*.tumblr.com"
-    ],
-
-    "DeviantArt": [
-      "deviantart.com",
-      "*.deviantart.com"
-    ],
-
-    "Roblox": [
-      "roblox.com",
-      "*.roblox.com",
-      "rbxcdn.com",
-      "*.rbxcdn.com"
-    ],
-
-    "Kick & Rumble": [
-      "kick.com",
-      "*.kick.com",
-      "rumble.com",
-      "*.rumble.com"
-    ],
-
-    "WeChat / QQ": [
-      "wechat.com",
-      "*.wechat.com",
-      "qq.com",
-      "*.qq.com"
-    ],
-
-    "VK": [
-      "vk.com",
-      "*.vk.com"
-    ],
-
-    "Spotify": [
-      "spotify.com",
-      "*.spotify.com",
-      "scdn.co",
-      "*.scdn.co",
-      "open.spotify.com",
-      "audio-fa.scdn.co",
-      "i.scdn.co"
-    ]
-  },
-  "unblocked": {
-    "YouTube": [
-      "*.youtube.com",
-      "youtube.com",
-      "youtu.be",
-      "*.googlevideo.com",
-      "*.ytimg.com",
-      "*.youtubei.googleapis.com",
-      "*.ggpht.com"
-    ]
+  "websites": {
+    "Facebook & Meta": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "*.facebook.com",
+        "facebook.com",
+        "*.fbcdn.net",
+        "*.messenger.com",
+        "messenger.com",
+        "*.instagram.com",
+        "instagram.com",
+        "*.cdninstagram.com",
+        "*.threads.net",
+        "threads.net",
+        "*.whatsapp.com",
+        "whatsapp.com",
+        "*.whatsapp.net"
+      ]
+    },
+    "TikTok": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "*.tiktok.com",
+        "tiktok.com",
+        "*.tiktokv.com",
+        "*.tiktokcdn.com",
+        "*.tiktokcdn-us.com",
+        "*.tik-tokcdn.com",
+        "*.musical.ly",
+        "musical.ly",
+        "*.byteoversea.com"
+      ]
+    },
+    "Reddit": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "*.reddit.com",
+        "reddit.com",
+        "www.reddit.com",
+        "*.redd.it",
+        "*.redditmedia.com",
+        "*.redditstatic.com"
+      ]
+    },
+    "Twitter / X": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "x.com",
+        "*.x.com",
+        "twitter.com",
+        "*.twitter.com",
+        "t.co",
+        "*.t.co",
+        "*.twimg.com",
+        "syndication.twitter.com"
+      ]
+    },
+    "Snapchat": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "*.snapchat.com",
+        "snapchat.com",
+        "*.sc-cdn.net",
+        "*.snapkit.com",
+        "*.snapchatcdn.com"
+      ]
+    },
+    "Discord": {
+      "blocked": true,
+      "apps": "discord*",
+      "urls": [
+        "discord.com",
+        "*.discord.com",
+        "discord.gg",
+        "*.discord.gg",
+        "discordapp.com",
+        "*.discordapp.com",
+        "cdn.discordapp.com",
+        "media.discordapp.net",
+        "status.discordapp.com"
+      ]
+    },
+    "Twitch": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "twitch.tv",
+        "*.twitch.tv",
+        "ttvnw.net",
+        "*.ttvnw.net",
+        "jtvnw.net",
+        "*.jtvnw.net"
+      ]
+    },
+    "Netflix": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "netflix.com",
+        "*.netflix.com",
+        "nflximg.net",
+        "*.nflximg.net",
+        "nflxvideo.net",
+        "*.nflxvideo.net",
+        "nflxso.net",
+        "*.nflxso.net",
+        "nflxext.com",
+        "*.nflxext.com"
+      ]
+    },
+    "Prime Video": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "primevideo.com",
+        "*.primevideo.com",
+        "amazonvideo.com",
+        "*.amazonvideo.com",
+        "media-amazon.com",
+        "*.media-amazon.com"
+      ]
+    },
+    "Hulu": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "hulu.com",
+        "*.hulu.com",
+        "huluim.com",
+        "*.huluim.com"
+      ]
+    },
+    "Disney+": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "disneyplus.com",
+        "*.disneyplus.com",
+        "bamgrid.com",
+        "*.bamgrid.com",
+        "dssott.com",
+        "*.dssott.com",
+        "hotstar.com",
+        "*.hotstar.com"
+      ]
+    },
+    "Max (HBO)": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "max.com",
+        "*.max.com",
+        "hbomax.com",
+        "*.hbomax.com"
+      ]
+    },
+    "Crunchyroll / VRV": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "crunchyroll.com",
+        "*.crunchyroll.com",
+        "vrv.co",
+        "*.vrv.co"
+      ]
+    },
+    "Apple Music / iTunes": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "music.apple.com",
+        "*.music.apple.com",
+        "itunes.apple.com",
+        "*.itunes.apple.com",
+        "mzstatic.com",
+        "*.mzstatic.com"
+      ]
+    },
+    "SoundCloud": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "soundcloud.com",
+        "*.soundcloud.com"
+      ]
+    },
+    "Steam": {
+      "blocked": true,
+      "apps": "steam*",
+      "urls": [
+        "steamcommunity.com",
+        "*.steamcommunity.com",
+        "steampowered.com",
+        "*.steampowered.com",
+        "steamstatic.com",
+        "*.steamstatic.com",
+        "steamcontent.com",
+        "*.steamcontent.com",
+        "steamusercontent.com",
+        "*.steamusercontent.com",
+        "steamgames.com",
+        "*.steamgames.com",
+        "s.team",
+        "*.s.team"
+      ]
+    },
+    "Epic Games / Fortnite": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "epicgames.com",
+        "*.epicgames.com",
+        "fortnite.com",
+        "*.fortnite.com"
+      ]
+    },
+    "Riot Games": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "*.riotgames.com",
+        "auth.riotgames.com",
+        "signin.riotgames.com",
+        "entitlements.auth.riotgames.com",
+        "playerpreferences.riotgames.com",
+        "store.riotgames.com",
+        "rso.auth.riotgames.com",
+        "rso.si.riotgames.com",
+        "rso.play.riotgames.com",
+        "*.riotcdn.net"
+      ]
+    },
+    "League of Legends": {
+      "blocked": true,
+      "apps": "LeagueClientUx*",
+      "urls": [
+        "*.leagueoflegends.com",
+        "status.leagueoflegends.com",
+        "lq.na1.lol.riotgames.com",
+        "lq.eu1.lol.riotgames.com",
+        "glz-na1-1.na1.a.pvp.net",
+        "glz-eu1-1.eu1.a.pvp.net",
+        "*.pvp.net",
+        "lolstatic-a.akamaihd.net",
+        "*.hwcdn.net",
+        "*.akamaized.net",
+        "*.akmhd.net",
+        "*.cloudfront.net",
+        "s3.amazonaws.com"
+      ]
+    },
+    "Blizzard / Battle.net": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "battle.net",
+        "*.battle.net",
+        "blizzard.com",
+        "*.blizzard.com",
+        "blzstatic.com",
+        "*.blzstatic.com"
+      ]
+    },
+    "EA / Origin": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "ea.com",
+        "*.ea.com",
+        "origin.com",
+        "*.origin.com"
+      ]
+    },
+    "Ubisoft": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "ubisoft.com",
+        "*.ubisoft.com",
+        "ubisoftconnect.com",
+        "*.ubisoftconnect.com",
+        "uplay.com",
+        "*.uplay.com"
+      ]
+    },
+    "Rockstar Games": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "rockstargames.com",
+        "*.rockstargames.com",
+        "socialclub.rockstargames.com"
+      ]
+    },
+    "GOG": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "gog.com",
+        "*.gog.com",
+        "gog-statics.com",
+        "*.gog-statics.com"
+      ]
+    },
+    "Xbox": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "xbox.com",
+        "*.xbox.com",
+        "xboxlive.com",
+        "*.xboxlive.com",
+        "xboxservices.com",
+        "*.xboxservices.com"
+      ]
+    },
+    "PlayStation": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "playstation.com",
+        "*.playstation.com",
+        "sonyentertainmentnetwork.com",
+        "*.sonyentertainmentnetwork.com"
+      ]
+    },
+    "Telegram": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "telegram.org",
+        "*.telegram.org",
+        "t.me",
+        "*.t.me",
+        "telegram.me",
+        "*.telegram.me",
+        "telegram-cdn.org",
+        "*.telegram-cdn.org"
+      ]
+    },
+    "Pinterest": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "pinterest.com",
+        "*.pinterest.com",
+        "pinimg.com",
+        "*.pinimg.com"
+      ]
+    },
+    "Tumblr": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "tumblr.com",
+        "*.tumblr.com"
+      ]
+    },
+    "DeviantArt": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "deviantart.com",
+        "*.deviantart.com"
+      ]
+    },
+    "Roblox": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "roblox.com",
+        "*.roblox.com",
+        "rbxcdn.com",
+        "*.rbxcdn.com"
+      ]
+    },
+    "Kick & Rumble": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "kick.com",
+        "*.kick.com",
+        "rumble.com",
+        "*.rumble.com"
+      ]
+    },
+    "WeChat / QQ": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "wechat.com",
+        "*.wechat.com",
+        "qq.com",
+        "*.qq.com"
+      ]
+    },
+    "VK": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "vk.com",
+        "*.vk.com"
+      ]
+    },
+    "Spotify": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "spotify.com",
+        "*.spotify.com",
+        "scdn.co",
+        "*.scdn.co",
+        "open.spotify.com",
+        "audio-fa.scdn.co",
+        "i.scdn.co"
+      ]
+    },
+    "YouTube": {
+      "blocked": true,
+      "apps": "",
+      "urls": [
+        "*.youtube.com",
+        "youtube.com",
+        "youtu.be",
+        "*.googlevideo.com",
+        "*.ytimg.com",
+        "*.youtubei.googleapis.com",
+        "*.ggpht.com"
+      ]
+    }
   }
 }
