@@ -147,7 +147,6 @@ class ClockWidget(QWidget):
 
     def start_blocking(self):
         #Start blocking selected websites
-        # If already running, don't start again
         if self.blocker_process and self.blocker_process.poll() is None:
             return
         
@@ -157,14 +156,13 @@ class ClockWidget(QWidget):
                 import subprocess
                 self.blocker_process = subprocess.Popen(
                     [
-                        sys.executable,
-                        "mvp_blocker.py",
+                        "mvp_blocker.exe",
                         "--blocklist", "blocklist.json",
                         "--enable-pac",
                         "--app-mode", "strict",
                         "--app-scan", "1.0"
                     ],
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
                 )
         
             print("[INFO] Blocker script started")
@@ -181,37 +179,28 @@ class ClockWidget(QWidget):
             # First, clear PAC by running the script with --disable-pac-only
             if sys.platform == "win32":
                 subprocess.run([
-                    sys.executable,
-                    "mvp_blocker.py",
+                    "mvp_blocker.exe",
                     "--disable-pac-only"
-                ], timeout=3)
-                print("[INFO] PAC configuration cleared")
+                ], timeout=3, creationflags=subprocess.CREATE_NO_WINDOW)
             
             # Check if process is still running
             if self.blocker_process.poll() is None:
                 if sys.platform == "win32":
                     import os
-                    # Graceful termination without /F flag
+                    # Force kill the process tree
                     try:
-                        os.system(f'taskkill /PID {self.blocker_process.pid} > nul 2>&1')
-                        print("[INFO] Sent graceful stop signal to blocker script")
+                        os.system(f'taskkill /F /T /PID {self.blocker_process.pid} > nul 2>&1')
+                        print("[INFO] Blocker script terminated")
                     except Exception as e:
-                        print(f"[WARN] Could not send stop signal: {e}")
+                        print(f"[WARN] Could not kill blocker: {e}")
                         self.blocker_process.terminate()
-                
-                # Wait longer for cleanup to complete (PAC cleanup takes time)
-                try:
-                    self.blocker_process.wait(timeout=3)
-                    print("[INFO] Blocker script stopped with cleanup")
-                except subprocess.TimeoutExpired:
-                    # If it STILL doesn't stop after 3 seconds, force kill
-                    if sys.platform == "win32":
-                        import os
-                        os.system(f'taskkill /F /PID {self.blocker_process.pid} > nul 2>&1')
-                    else:
+                    
+                    # Brief wait to confirm termination
+                    try:
+                        self.blocker_process.wait(timeout=1)
+                    except subprocess.TimeoutExpired:
                         self.blocker_process.kill()
-                    self.blocker_process.wait()
-                    print("[WARN] Blocker script force killed (cleanup may be incomplete)")
+                        self.blocker_process.wait()
         except Exception as e:
             print(f"[WARN] Error stopping blocker: {e}")
         finally:
