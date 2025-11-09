@@ -1,3 +1,11 @@
+# Team Members
+No first member, 4 team members:
+
+Brownie Tran
+Raymond Yang
+Yang Li
+Davi Vargas
+
 # Focus Dock
 
 A powerful Windows application designed to help you stay focused by blocking distracting websites and applications during timed work sessions
